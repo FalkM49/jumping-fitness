@@ -1,0 +1,20 @@
+{
+  "timezone": "Europe/Moscow",
+  "training": {
+    "weekdays": [1, 3, 5],
+    "morningTime": "08:10",
+    "eveningTime": "18:00",
+    "durationMinutes": 60,
+    "capacity": 13
+  },
+  "subscription": {
+    "durationDays": 30,
+    "trainings": 11,
+    "freezeLimitDays": 3
+  },
+  "rules": {
+    "cancelWindowHours": 3,
+    "endingSoonDays": 5,
+    "lowTrainingsThreshold": 1
+  }
+}

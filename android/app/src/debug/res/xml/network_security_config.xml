@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Только для debug-сборки: локальные эмуляторы Firebase работают по HTTP
+  без шифрования (10.0.2.2 — компьютер из Android-эмулятора, либо адрес
+  компьютера в Wi-Fi для телефона). Release-сборка этот файл не получает.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

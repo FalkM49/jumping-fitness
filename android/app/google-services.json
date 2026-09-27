@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "792093077664",
+    "project_id": "jumpingfitness",
+    "storage_bucket": "jumpingfitness.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792093077664:android:29b8a9ff3ad849855fd9c5",
+        "android_client_info": {
+          "package_name": "ru.jumpingfitness.jumping_fitness"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaUKIc43LJyTvr6_1k9eh1FtTdQHcvbS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

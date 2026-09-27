@@ -1,0 +1,53 @@
+# Облачная сборка для iPhone в Codemagic (https://codemagic.io): Mac не нужен.
+# Сборка запускается вручную кнопкой «Start new build» и сама загружает
+# приложение в TestFlight. Настройка — ИНСТРУКЦИЯ_ПО_ЭКСПЛУАТАЦИИ.md, шаг 1.12.
+
+workflows:
+  ios-testflight:
+    name: iPhone → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      # Ключ App Store Connect API, добавленный в Codemagic
+      # (Team settings → Integrations → Developer Portal) под этим именем.
+      app_store_connect: jumping-fitness-asc
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        # Сертификат и профиль Codemagic создаёт и берёт сам через ключ API.
+        distribution_type: app_store
+        bundle_identifier: ru.jumpingfitness.jumpingFitness
+
+    scripts:
+      - name: Зависимости
+        script: flutter pub get
+
+      - name: Проверка кода и тесты
+        script: |
+          flutter analyze
+          flutter test
+
+      - name: Подпись
+        script: xcode-project use-profiles
+
+      - name: Сборка .ipa
+        # Номер сборки растёт сам: App Store Connect не примет повтор.
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Сразу в TestFlight. Внешним тестировщикам Apple один раз
+        # коротко проверяет сборку (обычно до суток).
+        submit_to_testflight: true

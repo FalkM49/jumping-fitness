@@ -1,0 +1,16 @@
+[
+  { "id": "peony",      "order": 1,  "name": "Пион",      "description": "Пышный садовый цветок с многослойными лепестками", "meaning": "Процветание, благополучие",      "image": "assets/flowers/peony.png" },
+  { "id": "rose",       "order": 2,  "name": "Роза",      "description": "Классический символ красоты садовых цветов",       "meaning": "Любовь к себе и забота о себе", "image": "assets/flowers/rose.png" },
+  { "id": "sunflower",  "order": 3,  "name": "Подсолнух", "description": "Крупный жёлтый цветок, поворачивающийся к солнцу", "meaning": "Энергия, жизнерадостность",     "image": "assets/flowers/sunflower.png" },
+  { "id": "lavender",   "order": 4,  "name": "Лаванда",   "description": "Мелкий сиреневый цветок с успокаивающим ароматом", "meaning": "Спокойствие, гармония",         "image": "assets/flowers/lavender.png" },
+  { "id": "chamomile",  "order": 5,  "name": "Ромашка",   "description": "Простой полевой цветок с белыми лепестками",       "meaning": "Искренность, простота",         "image": "assets/flowers/chamomile.png" },
+  { "id": "tulip",      "order": 6,  "name": "Тюльпан",   "description": "Один из первых весенних цветов",                  "meaning": "Новые начинания",               "image": "assets/flowers/tulip.png" },
+  { "id": "orchid",     "order": 7,  "name": "Орхидея",   "description": "Утончённый и редкий тропический цветок",          "meaning": "Сила и утончённость",           "image": "assets/flowers/orchid.png" },
+  { "id": "lotus",      "order": 8,  "name": "Лотос",     "description": "Цветок, распускающийся над водой",                 "meaning": "Внутренний рост, перерождение", "image": "assets/flowers/lotus.png" },
+  { "id": "hydrangea",  "order": 9,  "name": "Гортензия", "description": "Крупные шаровидные соцветия",                      "meaning": "Благодарность, признательность", "image": "assets/flowers/hydrangea.png" },
+  { "id": "freesia",    "order": 10, "name": "Фрезия",    "description": "Ароматный цветок нежных оттенков",                 "meaning": "Доверие",                       "image": "assets/flowers/freesia.png" },
+  { "id": "iris",       "order": 11, "name": "Ирис",      "description": "Цветок с характерными «крыльями»-лепестками",      "meaning": "Мудрость, вдохновение",         "image": "assets/flowers/iris.png" },
+  { "id": "magnolia",   "order": 12, "name": "Магнолия",  "description": "Крупный цветок с плотными лепестками",             "meaning": "Достоинство, стойкость",        "image": "assets/flowers/magnolia.png" },
+  { "id": "lily_of_the_valley", "order": 13, "name": "Ландыш", "description": "Маленький белый весенний цветок",           "meaning": "Возвращение счастья",           "image": "assets/flowers/lily_of_the_valley.png" },
+  { "id": "gerbera",    "order": 14, "name": "Гербера",   "description": "Яркий цветок разных насыщенных оттенков",          "meaning": "Жизнерадостность, оптимизм",    "image": "assets/flowers/gerbera.png" }
+]

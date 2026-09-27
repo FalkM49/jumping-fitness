@@ -1,0 +1,221 @@
+rules_version = '2';
+
+// =============================================================================
+//  Jumping Fitness — Firestore Security Rules (этап 2)
+//  Схема данных и обоснование: docs/02_firestore_schema.md
+// =============================================================================
+//
+//  Принцип (ТЗ, раздел 8): всё, что влияет на деньги, места и доступ,
+//  меняется ТОЛЬКО через Cloud Functions (Admin SDK обходит эти правила).
+//  С клиента напрямую разрешено ровно три записи:
+//    1) создать свой профиль при регистрации (роль строго client);
+//    2) подать свою заявку в тренеры (статус строго pending);
+//    3) сохранить токен устройства для push-уведомлений.
+//  Всё остальное — только чтение, и только своего (для клиента).
+//
+//  Роли:
+//    client  — users/{uid}.role == 'client'
+//    trainer — users/{uid}.role == 'trainer'
+//    admin   — users/{uid}.isAdmin == true (ставится вручную в Firebase Console)
+//  Администратор имеет все права тренера.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- helpers
+
+    // Вошёл по почте И подтвердил её по ссылке из письма. Без подтверждения
+    // нельзя ничего: ни прочитать, ни зарегистрироваться.
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.get('email_verified', false) == true;
+    }
+
+    function myUid() {
+      return request.auth.uid;
+    }
+
+    function myUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // Зарегистрирован = вошёл с подтверждённой почтой И уже есть профиль в users.
+    function registered() {
+      return signedIn() && exists(myUserPath());
+    }
+
+    function me() {
+      return get(myUserPath()).data;
+    }
+
+    function isAdmin() {
+      return registered() && me().get('isAdmin', false) == true;
+    }
+
+    // Тренер или администратор.
+    function isStaff() {
+      return registered()
+        && (me().get('role', '') == 'trainer' || me().get('isAdmin', false) == true);
+    }
+
+    // ФИО: строка 3–100 символов без пробелов по краям и без управляющих
+    // символов (перевод строки, табуляция…). В RE2 точка не совпадает
+    // с переводом строки, поэтому вместо «.*» везде «[\\s\\S]*».
+    function validFullName(name) {
+      return name is string
+        && name.size() >= 3
+        && name.size() <= 100
+        && !name.matches('\\s[\\s\\S]*')
+        && !name.matches('[\\s\\S]*\\s')
+        && !name.matches('[\\s\\S]*[\\x00-\\x1F\\x7F][\\s\\S]*');
+    }
+
+    // Телефон для связи в формате E.164: «+» и 8–15 цифр (+79991234567).
+    function validPhone(phone) {
+      return phone is string && phone.matches('\\+[1-9][0-9]{7,14}');
+    }
+
+    // ------------------------------------------------------------------ users
+
+    match /users/{userId} {
+      // Свой профиль — себе; профили всех — тренерам и админу.
+      // Клиенты не видят друг друга (ФИО и телефон — личные данные).
+      allow get: if signedIn() && (userId == myUid() || isStaff());
+      allow list: if isStaff();
+
+      // Регистрация: только свой документ, только роль client, без прав админа,
+      // телефон — в формате E.164, время — серверное.
+      allow create: if signedIn()
+        && userId == myUid()
+        && request.resource.data.keys().hasOnly(['fullName', 'phone', 'role', 'isAdmin', 'createdAt'])
+        && request.resource.data.keys().hasAll(['fullName', 'phone', 'role', 'isAdmin', 'createdAt'])
+        && validFullName(request.resource.data.fullName)
+        && validPhone(request.resource.data.phone)
+        && request.resource.data.role == 'client'
+        && request.resource.data.isAdmin == false
+        && request.resource.data.createdAt == request.time;
+
+      // Роль, флаг админа, текущий абонемент, цветок месяца — только функции.
+      allow update, delete: if false;
+
+      // Токены устройств для push (FCM). Документ на устройство.
+      match /devices/{deviceId} {
+        allow read, delete: if signedIn() && userId == myUid();
+        allow create, update: if signedIn()
+          && userId == myUid()
+          && deviceId.size() <= 128
+          && request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt'])
+          && request.resource.data.keys().hasAll(['token', 'platform', 'updatedAt'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.token.size() <= 4096
+          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      // История уведомлений (этап 7). Пишут только функции; пользователь
+      // читает свои и может лишь отметить их прочитанными.
+      match /notifications/{notificationId} {
+        allow read: if signedIn() && userId == myUid();
+        allow update: if signedIn()
+          && userId == myUid()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read == true;
+        allow create, delete: if false;
+      }
+    }
+
+    // ------------------------------------------------------- trainer_requests
+
+    // Документ = uid заявителя, поэтому у человека максимум одна заявка.
+    match /trainer_requests/{userId} {
+      allow get: if signedIn() && (userId == myUid() || isAdmin());
+      allow list: if isAdmin();
+
+      // Подать заявку можно только за себя, только в статусе pending,
+      // и только если профиль (уже есть или создаётся в том же batch)
+      // имеет роль client, не админ (у админа и так все права тренера)
+      // и те же ФИО и телефон.
+      allow create: if signedIn()
+        && userId == myUid()
+        && request.resource.data.keys().hasOnly(['uid', 'fullName', 'phone', 'status', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'fullName', 'phone', 'status', 'createdAt'])
+        && request.resource.data.uid == myUid()
+        && request.resource.data.status == 'pending'
+        && validFullName(request.resource.data.fullName)
+        && request.resource.data.createdAt == request.time
+        && getAfter(myUserPath()).data.role == 'client'
+        && getAfter(myUserPath()).data.get('isAdmin', false) == false
+        && getAfter(myUserPath()).data.fullName == request.resource.data.fullName
+        && getAfter(myUserPath()).data.phone == request.resource.data.phone;
+
+      // Одобрить/отклонить — только функция по вызову админа.
+      allow update, delete: if false;
+    }
+
+    // ------------------------------------------------------ calendar_slots
+
+    // Кто занимает ячейку «день + утро/вечер». Нужна, чтобы в одной ячейке
+    // не оказалось двух активных тренировок и чтобы отменённая тренировка
+    // по расписанию по умолчанию не «воскресала».
+    match /calendar_slots/{slotKey} {
+      allow read: if registered();
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------- trainings
+
+    // Календарь общий: читают все зарегистрированные.
+    // Создание/изменение/отмена — только функции (тренер вызывает их),
+    // потому что каждое действие затрагивает места, записи и абонементы.
+    match /trainings/{trainingId} {
+      allow read: if registered();
+      allow write: if false;
+
+      // Запись клиента на тренировку. Документ = uid клиента.
+      // Клиент видит только свою запись; тренер — все.
+      match /bookings/{clientId} {
+        allow get: if signedIn() && (clientId == myUid() || isStaff());
+        allow list: if isStaff();
+        allow write: if false;
+      }
+    }
+
+    // Запрос «все мои записи» (collection group). Разрешён клиенту только
+    // с фильтром clientId == свой uid — правило проверяет это для каждого
+    // документа результата, иначе запрос отклоняется целиком.
+    match /{path=**}/bookings/{bookingId} {
+      allow read: if signedIn()
+        && (resource.data.clientId == myUid() || isStaff());
+    }
+
+    // ---------------------------------------------------------- subscriptions
+
+    // Абонементы: по документу на каждый период (текущий + история).
+    // Клиент видит только свои, тренер — все. Писать — только функции.
+    match /subscriptions/{subscriptionId} {
+      allow read: if signedIn()
+        && (resource.data.clientId == myUid() || isStaff());
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------- flowers
+
+    // Справочник цветков. Заполняется один раз из firebase/seed/flowers.json.
+    match /flowers/{flowerId} {
+      allow read: if registered();
+      allow write: if false;
+    }
+
+    // --------------------------------------------------------------- settings
+
+    // Значения по умолчанию (ТЗ, раздел 7). Меняются вручную в Console.
+    match /settings/{docId} {
+      allow read: if registered();
+      allow write: if false;
+    }
+
+    // Всё, что не описано выше, запрещено (Firestore запрещает по умолчанию).
+  }
+}
