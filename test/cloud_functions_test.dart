@@ -30,4 +30,16 @@ void main() {
     );
     expect(failure.message, isNot(contains('TypeError')));
   });
+
+  test('веб: HTTP-код, приписанный браузером, из текста убирается', () {
+    for (final raw in [
+      'Вы уже записаны на эту тренировку. [400]',
+      'Вы уже записаны на эту тренировку. (400)',
+    ]) {
+      final failure = cloudFunctionFailureFrom(
+        FirebaseFunctionsException(code: 'failed-precondition', message: raw),
+      );
+      expect(failure.message, 'Вы уже записаны на эту тренировку.');
+    }
+  });
 }

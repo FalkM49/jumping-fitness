@@ -1,1 +1,58 @@
-{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"functions":[{"source":"functions","codebase":"default","runtime":"nodejs22","ignore":["node_modules","src","scripts","*.log"],"predeploy":["npm --prefix \"$RESOURCE_DIR\" run build"]}],"emulators":{"auth":{"host":"127.0.0.1","port":9099},"firestore":{"host":"127.0.0.1","port":8080},"functions":{"host":"127.0.0.1","port":5001},"ui":{"enabled":false},"singleProjectMode":true},"flutter":{"platforms":{"android":{"default":{"projectId":"jumpingfitness","appId":"1:792093077664:android:29b8a9ff3ad849855fd9c5","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"jumpingfitness","configurations":{"android":"1:792093077664:android:29b8a9ff3ad849855fd9c5","ios":"1:792093077664:ios:fee60c0669c8f7e55fd9c5"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }],
+    "headers": [
+      {
+        "source": "**/*.@(html|js|json|webmanifest)",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      },
+      {
+        "source": "/firebase-messaging-sw.js",
+        "headers": [{ "key": "Service-Worker-Allowed", "value": "/" }]
+      }
+    ]
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs22",
+      "ignore": ["node_modules", "src", "scripts", "*.log"],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    }
+  ],
+  "emulators": {
+    "auth": { "host": "127.0.0.1", "port": 9099 },
+    "firestore": { "host": "127.0.0.1", "port": 8080 },
+    "functions": { "host": "127.0.0.1", "port": 5001 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "jumpingfitness",
+          "appId": "1:792093077664:android:29b8a9ff3ad849855fd9c5",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "jumpingfitness",
+          "configurations": {
+            "android": "1:792093077664:android:29b8a9ff3ad849855fd9c5",
+            "ios": "1:792093077664:ios:fee60c0669c8f7e55fd9c5",
+            "web": "1:792093077664:web:8c2323b4737ea1f25fd9c5"
+          }
+        }
+      }
+    }
+  }
+}

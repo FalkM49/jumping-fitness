@@ -70,6 +70,29 @@ describe('HTTP: протокол callable', { skip: !BASE && 'только npm r
     assert.equal(res.error?.message, 'Нет действующего абонемента.');
   });
 
+  it('CORS: веб-версии разрешено, чужому сайту — нет', async () => {
+    const preflight = await fetch(`${BASE}/bookTraining`, {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://jumpingfitness.web.app' },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://jumpingfitness.web.app');
+    assert.match(preflight.headers.get('access-control-allow-headers') ?? '', /Authorization/);
+
+    const call = await fetch(`${BASE}/ensureMonthlyFlower`, {
+      method: 'POST',
+      headers: { Origin: 'https://jumpingfitness.web.app', 'Content-Type': 'application/json' },
+      body: '{"data":{}}',
+    });
+    assert.equal(call.headers.get('access-control-allow-origin'), 'https://jumpingfitness.web.app');
+
+    const foreign = await fetch(`${BASE}/bookTraining`, {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://evil.example' },
+    });
+    assert.equal(foreign.headers.get('access-control-allow-origin'), null);
+  });
+
   it('64-битные числа от телефона разворачиваются', async () => {
     await seedSubscription('sub_anna', anna.uid);
     const res = await call(

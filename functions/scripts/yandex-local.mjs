@@ -26,6 +26,7 @@ createServer(async (req, res) => {
   const query = Object.fromEntries(url.searchParams);
   query.fn ??= url.pathname.split('/').filter(Boolean).at(-1);
 
+  const started = Date.now();
   const response = await handler({
     httpMethod: req.method,
     headers: Object.fromEntries(
@@ -37,6 +38,7 @@ createServer(async (req, res) => {
   });
   res.writeHead(response.statusCode, response.headers);
   res.end(response.body);
+  console.log(`${req.method} ${url.pathname} → ${response.statusCode} (${Date.now() - started} мс)`);
 }).listen(port, '127.0.0.1', () => {
   console.log(`Адаптер Yandex слушает http://127.0.0.1:${port} (Firestore ${process.env.FIRESTORE_EMULATOR_HOST})`);
 });

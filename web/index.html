@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <!-- Путь приложения; подставляется `flutter build web --base-href`. -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- viewport-fit=cover: на iPhone с «чёлкой» приложение занимает весь
+       экран, отступы под вырез и полоску «Домой» даёт SafeArea. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Jumping Fitness — запись на тренировки и абонемент.">
+
+  <!-- Установка на экран «Домой» (iPhone: Поделиться → На экран «Домой»). -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jumping Fitness">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="theme-color" content="#C81E5E">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Jumping Fitness</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Пока грузится Flutter — фон и название, а не белый экран. */
+    html, body { margin: 0; height: 100%; background: #1C1418; }
+    @media (prefers-color-scheme: light) { html, body { background: #FFF8FA; } }
+    #loading {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      font: 600 22px -apple-system, system-ui, sans-serif; color: #C81E5E;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">Jumping Fitness</div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

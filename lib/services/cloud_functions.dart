@@ -48,7 +48,11 @@ class CloudFunctionFailure implements Exception {
 CloudFunctionFailure cloudFunctionFailureFrom(
   FirebaseFunctionsException error,
 ) {
-  final serverMessage = error.message;
+  // В браузере к тексту сервера приписывается HTTP-код («… [400]») — убираем.
+  final serverMessage = error.message?.replaceFirst(
+    RegExp(r'\s*[\[(]\d{3}[\])]\s*$'),
+    '',
+  );
   final message = switch (error.code) {
     'permission-denied' ||
     'failed-precondition' ||

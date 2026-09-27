@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../client/calendar_cells.dart';
+import '../../notifications/web_push_prompt.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/trainer_badge.dart';
 import '../admin/trainer_requests_entry.dart';
@@ -29,6 +30,7 @@ class TrainerHomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
         children: [
+          const WebPushPrompt(),
           if (isAdmin) ...[
             const SizedBox(height: 8),
             const TrainerRequestsEntry(),

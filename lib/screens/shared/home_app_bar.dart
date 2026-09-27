@@ -62,7 +62,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Выйти из аккаунта?'),
-        content: const Text('Чтобы войти снова, понадобится код из SMS.'),
+        content: const Text('Чтобы войти снова, понадобятся почта и пароль.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

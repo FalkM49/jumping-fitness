@@ -2,7 +2,7 @@ import { DocumentReference, FieldValue, getFirestore } from 'firebase-admin/fire
 import { getMessaging } from 'firebase-admin/messaging';
 import { logger } from 'firebase-functions';
 
-import { Collections } from './config.js';
+import { Collections, WEB_APP_URL } from './config.js';
 
 /**
  * Уведомления (ТЗ 2, 3.2, 5, 8.5). Каждое уведомление уходит по двум
@@ -105,6 +105,11 @@ async function deliver(uid: string, notification: Notification): Promise<void> {
       notification: { tag: notification.kind, color: '#C81E5E' },
     },
     apns: { payload: { aps: { sound: 'default' } } },
+    // Веб-версия: значок и куда вести по тапу (браузер откроет приложение).
+    webpush: {
+      notification: { icon: '/icons/Icon-192.png', tag: notification.kind },
+      fcmOptions: { link: WEB_APP_URL },
+    },
   });
 
   const dead = response.responses

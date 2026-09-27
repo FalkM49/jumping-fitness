@@ -15,6 +15,17 @@ export const FIRESTORE_TRIGGER_REGION = 'europe-west3';
 /** Часовой пояс студии: все «дни» и расписание — по Москве (ТЗ, схема данных). */
 export const STUDIO_TIMEZONE = 'Europe/Moscow';
 
+/**
+ * Веб-версия (для iPhone без App Store) на Firebase Hosting: сюда ведёт
+ * тап по push в браузере, и только с этих адресов (плюс локальная
+ * разработка) браузер может вызывать функции (CORS, yandex.ts).
+ */
+export const WEB_APP_URL = 'https://jumpingfitness.web.app/';
+export const WEB_APP_ORIGINS: readonly RegExp[] = [
+  /^https:\/\/jumpingfitness\.(web\.app|firebaseapp\.com)$/,
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+];
+
 /** Имена коллекций — как в lib/models/firestore_paths.dart. */
 export const Collections = {
   users: 'users',

@@ -11,12 +11,16 @@ class AppTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.textStyles.appTitle,
-      maxLines: 1,
-      overflow: TextOverflow.fade,
-      softWrap: false,
+    // На узком экране (iPhone, 375 точек, три значка в шапке) название
+    // чуть уменьшается целиком, а не обрезается.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        style: context.textStyles.appTitle,
+        maxLines: 1,
+        softWrap: false,
+      ),
     );
   }
 }

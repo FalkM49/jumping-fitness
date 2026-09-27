@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,6 +20,26 @@ class PushMessage {
   final Map<String, String> data;
 }
 
+/// Разрешение на уведомления на этом устройстве.
+enum PushPermission {
+  granted,
+
+  /// Ещё не спрашивали. В браузере спросить можно только по нажатию.
+  notAsked,
+
+  /// Запрещено — включается только в настройках телефона или браузера.
+  denied,
+
+  /// Браузер не умеет push. На iPhone — пока сайт не добавлен
+  /// на экран «Домой» (iOS 16.4+).
+  unsupported,
+}
+
+/// Публичный ключ веб-push (VAPID): Firebase Console → Project settings →
+/// Cloud Messaging → Web Push certificates. Не секрет. Пусто — ключ Firebase
+/// по умолчанию.
+const String webPushVapidKey = String.fromEnvironment('WEB_PUSH_VAPID_KEY');
+
 /// Push-уведомления через Firebase Cloud Messaging (ТЗ 2, 3.2, 5).
 ///
 /// - [start] — после входа: разрешение на уведомления, токен устройства
@@ -39,6 +58,13 @@ abstract interface class PushService {
   Stream<PushMessage> get foreground;
 
   Stream<PushMessage> get opened;
+
+  /// Можно ли сейчас получать push на этом устройстве.
+  Future<PushPermission> permission();
+
+  /// Спросить разрешение и включить push. В браузере вызывать только
+  /// по нажатию кнопки — иначе Safari не покажет запрос. 	rue — включено.
+  Future<bool> enable(String uid);
 }
 
 class FirebasePushService implements PushService {
@@ -87,7 +113,11 @@ class FirebasePushService implements PushService {
   Future<void> _saveToken(String uid, String token) async {
     await _db.doc('users/$uid/devices/${await _deviceId()}').set({
       'token': token,
-      'platform': Platform.isIOS ? 'ios' : 'android',
+      'platform': kIsWeb
+          ? 'web'
+          : defaultTargetPlatform == TargetPlatform.iOS
+          ? 'ios'
+          : 'android',
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -121,17 +151,67 @@ class FirebasePushService implements PushService {
     _uid = uid;
     _listen();
     try {
+      if (kIsWeb) {
+        // В браузере запрос разрешения без нажатия Safari отклонит —
+        // спрашиваем по кнопке (enable). Если уже разрешено — просто токен.
+        if (await permission() == PushPermission.granted) {
+          await _registerToken(uid);
+        }
+        return;
+      }
       await _messaging.requestPermission();
       // Приложение открыли тапом по уведомлению, когда оно было закрыто.
       final initial = await _messaging.getInitialMessage();
       if (initial != null) _opened.add(_toMessage(initial));
-
-      final token = await _messaging.getToken();
-      if (token != null) await _saveToken(uid, token);
+      await _registerToken(uid);
     } on Object catch (error) {
       // Нет Google Play, эмуляторы Firebase без FCM, нет сети — приложение
       // работает и без push: история уведомлений всё равно видна.
       _log(error);
+    }
+  }
+
+  Future<void> _registerToken(String uid) async {
+    final token = await _messaging.getToken(
+      vapidKey: kIsWeb && webPushVapidKey.isNotEmpty ? webPushVapidKey : null,
+    );
+    if (token != null) await _saveToken(uid, token);
+  }
+
+  @override
+  Future<PushPermission> permission() async {
+    try {
+      if (kIsWeb && !await _messaging.isSupported()) {
+        return PushPermission.unsupported;
+      }
+      final settings = await _messaging.getNotificationSettings();
+      return switch (settings.authorizationStatus) {
+        AuthorizationStatus.authorized ||
+        AuthorizationStatus.provisional => PushPermission.granted,
+        AuthorizationStatus.denied ||
+        AuthorizationStatus.deniedPermanently => PushPermission.denied,
+        AuthorizationStatus.notDetermined => PushPermission.notAsked,
+      };
+    } on Object catch (error) {
+      _log(error);
+      return PushPermission.unsupported;
+    }
+  }
+
+  @override
+  Future<bool> enable(String uid) async {
+    try {
+      final settings = await _messaging.requestPermission();
+      final status = settings.authorizationStatus;
+      if (status != AuthorizationStatus.authorized &&
+          status != AuthorizationStatus.provisional) {
+        return false;
+      }
+      await _registerToken(uid);
+      return true;
+    } on Object catch (error) {
+      _log(error);
+      return false;
     }
   }
 
@@ -162,4 +242,10 @@ class UnavailablePushService implements PushService {
 
   @override
   Stream<PushMessage> get opened => const Stream.empty();
+
+  @override
+  Future<PushPermission> permission() async => PushPermission.unsupported;
+
+  @override
+  Future<bool> enable(String uid) async => false;
 }

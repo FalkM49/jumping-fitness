@@ -5,6 +5,7 @@ import '../../auth/session.dart';
 import '../../client/calendar_cells.dart';
 import '../../client/client_providers.dart';
 import '../../models/models.dart';
+import '../../notifications/web_push_prompt.dart';
 import '../../widgets/info_notice.dart';
 import '../../widgets/section_title.dart';
 import '../shared/home_app_bar.dart';
@@ -51,6 +52,7 @@ class ClientHomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
         children: [
+          const WebPushPrompt(),
           for (final banner in banners)
             Padding(padding: const EdgeInsets.only(bottom: 8), child: banner),
           const SectionTitle('Календарь'),

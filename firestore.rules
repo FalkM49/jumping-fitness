@@ -110,7 +110,7 @@ service cloud.firestore {
           && request.resource.data.token is string
           && request.resource.data.token.size() > 0
           && request.resource.data.token.size() <= 4096
-          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.platform in ['android', 'ios', 'web']
           && request.resource.data.updatedAt == request.time;
       }
 

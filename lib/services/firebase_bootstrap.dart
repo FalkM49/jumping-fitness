@@ -30,7 +30,7 @@ final firebaseStatusProvider = Provider<FirebaseStatus>(
 ///   flutter run --dart-define=USE_FIREBASE_EMULATORS=true
 ///
 /// Эмуляторы запускаются из папки functions: `npm run emulators`.
-/// SMS не отправляются — код для входа показывает `npm run dev:codes`.
+/// Письма не отправляются — ссылки из них показывает `npm run dev:links`.
 const bool useFirebaseEmulators = bool.fromEnvironment(
   'USE_FIREBASE_EMULATORS',
 );

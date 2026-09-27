@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -63,5 +60,14 @@ class DefaultFirebaseOptions {
     projectId: 'jumpingfitness',
     storageBucket: 'jumpingfitness.firebasestorage.app',
     iosBundleId: 'ru.jumpingfitness.jumpingFitness',
+  );
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCYpHpJu1TrDOSEjrWMwlh59siPzu5WIJo',
+    appId: '1:792093077664:web:8c2323b4737ea1f25fd9c5',
+    messagingSenderId: '792093077664',
+    projectId: 'jumpingfitness',
+    authDomain: 'jumpingfitness.firebaseapp.com',
+    storageBucket: 'jumpingfitness.firebasestorage.app',
+    measurementId: 'G-8WJNZ5N5VJ',
   );
 }

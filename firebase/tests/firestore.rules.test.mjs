@@ -239,8 +239,9 @@ describe('users/{uid}/devices', () => {
     token: 'fcm-token-123', platform: 'android', updatedAt: serverTimestamp(), ...overrides,
   });
 
-  it('свой токен устройства сохранить можно', async () => {
+  it('свой токен устройства сохранить можно — телефон и браузер', async () => {
     await assertSucceeds(setDoc(doc(as('anna'), 'users/anna/devices/phone1'), device()));
+    await assertSucceeds(setDoc(doc(as('anna'), 'users/anna/devices/iphone-web'), device({ platform: 'web' })));
   });
 
   it('чужой — нельзя', async () => {
@@ -249,7 +250,7 @@ describe('users/{uid}/devices', () => {
   });
 
   it('некорректная платформа или лишние поля — нельзя', async () => {
-    await assertFails(setDoc(doc(as('anna'), 'users/anna/devices/p'), device({ platform: 'web' })));
+    await assertFails(setDoc(doc(as('anna'), 'users/anna/devices/p'), device({ platform: 'windows' })));
     await assertFails(setDoc(doc(as('anna'), 'users/anna/devices/p'), device({ role: 'trainer' })));
   });
 });

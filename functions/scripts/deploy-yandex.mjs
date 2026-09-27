@@ -185,6 +185,18 @@ paths:
         type: cloud_functions
         function_id: ${fn.id}
         service_account_id: ${sa.id}
+    # Предварительный запрос браузера (CORS) для веб-версии — отвечает функция.
+    options:
+      parameters:
+        - name: fn
+          in: path
+          required: true
+          schema:
+            type: string
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: ${fn.id}
+        service_account_id: ${sa.id}
 `);
 let gateway = find(yc(['serverless', 'api-gateway', 'list']), GATEWAY);
 if (gateway) {

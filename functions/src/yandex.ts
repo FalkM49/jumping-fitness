@@ -21,6 +21,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions';
 import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 
+import { WEB_APP_ORIGINS } from './config.js';
 import * as api from './index.js';
 
 type Callable = { run(request: CallableRequest<unknown>): unknown };
@@ -131,7 +132,35 @@ export function decode(value: unknown): unknown {
   return value;
 }
 
+/**
+ * CORS для веб-версии: браузер вызывает функции с другого адреса (Firebase
+ * Hosting) и сначала спрашивает разрешение запросом OPTIONS. Разрешаем
+ * только адреса приложения и локальную разработку; телефонам (Android)
+ * эти заголовки не нужны — у них нет Origin.
+ */
+function corsHeaders(event: YandexHttpEvent): Record<string, string> {
+  const origin = header(event, 'origin');
+  if (!origin || !WEB_APP_ORIGINS.some((re) => re.test(origin))) return {};
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers':
+      'Authorization, Content-Type, Firebase-Instance-ID-Token, X-Firebase-AppCheck, X-Firebase-GMPID',
+    'Access-Control-Max-Age': '3600',
+    Vary: 'Origin',
+  };
+}
+
 export async function handleCall(event: YandexHttpEvent): Promise<YandexHttpResponse> {
+  const cors = corsHeaders(event);
+  if ((event.httpMethod ?? '').toUpperCase() === 'OPTIONS') {
+    return { statusCode: 204, headers: cors, body: '' };
+  }
+  const response = await callFunction(event);
+  return { ...response, headers: { ...response.headers, ...cors } };
+}
+
+async function callFunction(event: YandexHttpEvent): Promise<YandexHttpResponse> {
   const name = event.pathParams?.fn ?? event.queryStringParameters?.fn ?? '';
   const fn = callables[name];
   if (!fn) {

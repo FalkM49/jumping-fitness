@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jumping_fitness/models/models.dart';
 import 'package:jumping_fitness/notifications/deep_link.dart';
 import 'package:jumping_fitness/notifications/push_service.dart';
+import 'package:jumping_fitness/notifications/web_push_prompt.dart';
 
 import 'support/fake_push.dart';
 import 'support/fake_studio.dart';
@@ -202,6 +203,45 @@ void main() {
       await tester.tap(find.byTooltip('Уведомления'));
       await tester.pumpAndSettle();
       expect(find.text('Уведомлений пока нет.'), findsOneWidget);
+    });
+  });
+
+  group('веб-версия: подсказка про push', () {
+    WebPushHint hint({
+      bool isWeb = true,
+      bool isIos = true,
+      bool standalone = false,
+      PushPermission permission = PushPermission.unsupported,
+    }) => webPushHintFor(
+      isWeb: isWeb,
+      isIos: isIos,
+      standalone: standalone,
+      permission: permission,
+    );
+
+    test('iPhone в Safari — сначала «на экран Домой»', () {
+      expect(hint(), WebPushHint.installToHomeScreen);
+    });
+
+    test('установлено или Android-браузер: не спрашивали — кнопка', () {
+      expect(
+        hint(standalone: true, permission: PushPermission.notAsked),
+        WebPushHint.enable,
+      );
+      expect(
+        hint(isIos: false, permission: PushPermission.notAsked),
+        WebPushHint.enable,
+      );
+    });
+
+    test('уже разрешено, запрещено, не браузер — без подсказки', () {
+      expect(hint(permission: PushPermission.granted), WebPushHint.none);
+      expect(hint(permission: PushPermission.denied), WebPushHint.none);
+      expect(hint(isIos: false), WebPushHint.none);
+      expect(
+        hint(isWeb: false, permission: PushPermission.notAsked),
+        WebPushHint.none,
+      );
     });
   });
 }

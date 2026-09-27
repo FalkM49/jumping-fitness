@@ -24,6 +24,19 @@ class FakePush implements PushService {
   @override
   Stream<PushMessage> get opened => _opened.stream;
 
+  PushPermission permissionStatus = PushPermission.granted;
+  final List<String> enabled = [];
+
+  @override
+  Future<PushPermission> permission() async => permissionStatus;
+
+  @override
+  Future<bool> enable(String uid) async {
+    enabled.add(uid);
+    permissionStatus = PushPermission.granted;
+    return true;
+  }
+
   void arriveWhileOpen(PushMessage message) => _foreground.add(message);
 
   void tapInSystemTray(PushMessage message) => _opened.add(message);
