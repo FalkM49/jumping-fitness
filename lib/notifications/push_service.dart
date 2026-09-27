@@ -36,9 +36,13 @@ enum PushPermission {
 }
 
 /// Публичный ключ веб-push (VAPID): Firebase Console → Project settings →
-/// Cloud Messaging → Web Push certificates. Не секрет. Пусто — ключ Firebase
-/// по умолчанию.
-const String webPushVapidKey = String.fromEnvironment('WEB_PUSH_VAPID_KEY');
+/// Cloud Messaging → Web Push certificates. Не секрет. Другой ключ при
+/// сборке: `--dart-define=WEB_PUSH_VAPID_KEY=…`.
+const String webPushVapidKey = String.fromEnvironment(
+  'WEB_PUSH_VAPID_KEY',
+  defaultValue:
+      'BMrT8JgOq7dnAuE-In9H3vhlC-VMz_fmVcLsAGH-1FkD6fySK27Km0O-kZoRpuXGr-39OJe7D5crF-Caxiloms8',
+);
 
 /// Push-уведомления через Firebase Cloud Messaging (ТЗ 2, 3.2, 5).
 ///
