@@ -67,4 +67,5 @@ flutter_log.txt
 # Сборка Cloud Functions и локальные данные эмулятора
 functions/lib/
 firebase/dev/emulator-data/
+**/firebase-export-*/
 
