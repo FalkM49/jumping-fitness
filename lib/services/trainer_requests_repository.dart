@@ -46,7 +46,6 @@ class FirebaseTrainerRequestsRepository implements TrainerRequestsRepository {
 
   Future<void> _call(String name, String uid) =>
       callFunction(_functions, name, {'uid': uid});
-
 }
 
 /// Порядок показа: раньше поданные — выше; заявка без даты (только что

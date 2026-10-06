@@ -90,7 +90,6 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   Widget build(BuildContext context) {
     final email = widget.user.email;
 
-
     return Scaffold(
       appBar: AppBar(
         title: const AppTitle(),

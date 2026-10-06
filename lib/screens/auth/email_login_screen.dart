@@ -194,7 +194,10 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
             ],
             if (state.info != null) ...[
               const SizedBox(height: 12),
-              InfoNotice(icon: Icons.mark_email_read_outlined, text: state.info!),
+              InfoNotice(
+                icon: Icons.mark_email_read_outlined,
+                text: state.info!,
+              ),
             ],
             const SizedBox(height: 16),
             BusyFilledButton(

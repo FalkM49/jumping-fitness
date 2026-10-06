@@ -80,12 +80,18 @@ void main() {
       authFailureKindForCode('wrong-password'),
       AuthFailureKind.wrongCredentials,
     );
-    expect(authFailureKindForCode('invalid-email'), AuthFailureKind.invalidEmail);
+    expect(
+      authFailureKindForCode('invalid-email'),
+      AuthFailureKind.invalidEmail,
+    );
     expect(
       authFailureKindForCode('email-already-in-use'),
       AuthFailureKind.emailInUse,
     );
-    expect(authFailureKindForCode('weak-password'), AuthFailureKind.weakPassword);
+    expect(
+      authFailureKindForCode('weak-password'),
+      AuthFailureKind.weakPassword,
+    );
     expect(
       authFailureKindForCode('too-many-requests'),
       AuthFailureKind.tooManyRequests,
@@ -103,7 +109,13 @@ void main() {
   group('почта и пароль', () {
     test('адрес обрезается и приводится к нижнему регистру', () {
       expect(EmailAddress.normalize('  Anna.S@Mail.RU '), 'anna.s@mail.ru');
-      for (final bad in ['', 'anna', 'anna@mail', '@mail.ru', 'an na@mail.ru']) {
+      for (final bad in [
+        '',
+        'anna',
+        'anna@mail',
+        '@mail.ru',
+        'an na@mail.ru',
+      ]) {
         expect(EmailAddress.normalize(bad), isNull, reason: bad);
       }
     });
@@ -259,29 +271,32 @@ void main() {
   });
 
   group('подтверждение почты в сессии', () {
-    test('без подтверждения — экран подтверждения, после — регистрация', () async {
-      final auth = FakeAuthRepository();
-      final c = ProviderContainer(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(auth),
-          userRepositoryProvider.overrideWithValue(FakeBackend()),
-        ],
-      );
-      addTearDown(c.dispose);
-      c.listen(sessionProvider, (_, _) {});
+    test(
+      'без подтверждения — экран подтверждения, после — регистрация',
+      () async {
+        final auth = FakeAuthRepository();
+        final c = ProviderContainer(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(auth),
+            userRepositoryProvider.overrideWithValue(FakeBackend()),
+          ],
+        );
+        addTearDown(c.dispose);
+        c.listen(sessionProvider, (_, _) {});
 
-      await auth.signUp(email: 'a@mail.ru', password: '12345678');
-      for (var i = 0; i < 10; i++) {
-        await Future<void>.delayed(Duration.zero);
-      }
-      expect(c.read(sessionProvider), isA<NeedsEmailVerification>());
+        await auth.signUp(email: 'a@mail.ru', password: '12345678');
+        for (var i = 0; i < 10; i++) {
+          await Future<void>.delayed(Duration.zero);
+        }
+        expect(c.read(sessionProvider), isA<NeedsEmailVerification>());
 
-      auth.confirmEmail('a@mail.ru');
-      await auth.reloadUser();
-      for (var i = 0; i < 10; i++) {
-        await Future<void>.delayed(Duration.zero);
-      }
-      expect(c.read(sessionProvider), isA<NeedsRegistration>());
-    });
+        auth.confirmEmail('a@mail.ru');
+        await auth.reloadUser();
+        for (var i = 0; i < 10; i++) {
+          await Future<void>.delayed(Duration.zero);
+        }
+        expect(c.read(sessionProvider), isA<NeedsRegistration>());
+      },
+    );
   });
 }

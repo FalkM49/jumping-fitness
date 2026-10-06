@@ -69,7 +69,6 @@ class CloudStudioFunctions implements StudioFunctions {
   Future<void> _call(String name, Map<String, Object?> args) =>
       callFunction(_functions, name, args);
 
-
   /// Существующая тренировка — по ID, по расписанию без документа — по ячейке.
   static Map<String, Object?> _target(Training training) => training.id != null
       ? {'trainingId': training.id}

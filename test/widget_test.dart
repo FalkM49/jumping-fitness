@@ -41,7 +41,10 @@ Future<void> fillSignUp(
   await tester.enterText(field('Почта'), mail);
   await tester.enterText(field('Пароль'), pass);
   await tester.enterText(field('Пароль ещё раз'), repeat ?? pass);
-  await tapVisible(tester, find.widgetWithText(FilledButton, 'Зарегистрироваться'));
+  await tapVisible(
+    tester,
+    find.widgetWithText(FilledButton, 'Зарегистрироваться'),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -77,7 +80,10 @@ void main() {
 
         expect(find.text('Вход'), findsOneWidget);
         expect(find.byType(BackButton), findsNothing);
-        await tapVisible(tester, find.text('Впервые здесь? Зарегистрироваться'));
+        await tapVisible(
+          tester,
+          find.text('Впервые здесь? Зарегистрироваться'),
+        );
         await tester.pumpAndSettle();
         expect(find.text('Регистрация'), findsOneWidget);
 
@@ -95,18 +101,27 @@ void main() {
         expect(auth.accounts, {email: password});
         expect(auth.verificationEmails, 1);
         expect(find.text('Подтвердите почту'), findsOneWidget);
-        expect(find.textContaining('Отправили письмо на $email'), findsOneWidget);
+        expect(
+          find.textContaining('Отправили письмо на $email'),
+          findsOneWidget,
+        );
 
         // Ссылка ещё не открыта — остаёмся и объясняем.
         await tapVisible(tester, find.text('Я подтвердил(а) почту'));
         await tester.pumpAndSettle();
-        expect(find.textContaining('Почта ещё не подтверждена'), findsOneWidget);
+        expect(
+          find.textContaining('Почта ещё не подтверждена'),
+          findsOneWidget,
+        );
 
         auth.confirmEmail(email);
         await tapVisible(tester, find.text('Я подтвердил(а) почту'));
         await tester.pumpAndSettle();
         expect(find.text('Знакомство'), findsOneWidget);
-        expect(find.textContaining('Почта $email подтверждена'), findsOneWidget);
+        expect(
+          find.textContaining('Почта $email подтверждена'),
+          findsOneWidget,
+        );
 
         await tapVisible(tester, find.text('Готово'));
         expect(find.text('Введите ФИО.'), findsOneWidget);
@@ -145,7 +160,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Знакомство'), findsOneWidget);
-      await fillRegistration(tester, name: 'Петрова Ольга', tel: '+7 916 111-22-33');
+      await fillRegistration(
+        tester,
+        name: 'Петрова Ольга',
+        tel: '+7 916 111-22-33',
+      );
       await tapVisible(tester, find.text('Хочу стать тренером'));
       await tapVisible(tester, find.text('Готово'));
       await tester.pumpAndSettle();
@@ -225,7 +244,10 @@ void main() {
       await tester.enterText(field('Пароль'), 'не-тот');
       await tapVisible(tester, find.widgetWithText(FilledButton, 'Войти'));
       await tester.pumpAndSettle();
-      expect(find.text(AuthFailureKind.wrongCredentials.message), findsOneWidget);
+      expect(
+        find.text(AuthFailureKind.wrongCredentials.message),
+        findsOneWidget,
+      );
 
       await tester.enterText(field('Пароль'), password);
       await tapVisible(tester, find.widgetWithText(FilledButton, 'Войти'));

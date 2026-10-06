@@ -20,9 +20,12 @@ void main() {
   tearDown(resetErrorReporterForTest);
 
   test('отчёт: тип, текст, стек и сведения об устройстве', () {
-    reporter().report('function_error', StateError('сломалось'), StackTrace.current, {
-      'function': 'bookTraining',
-    });
+    reporter().report(
+      'function_error',
+      StateError('сломалось'),
+      StackTrace.current,
+      {'function': 'bookTraining'},
+    );
     expect(sent, hasLength(1));
     final r = sent.single;
     expect(r['kind'], 'function_error');

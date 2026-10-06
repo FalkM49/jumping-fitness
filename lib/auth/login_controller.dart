@@ -88,11 +88,7 @@ class LoginController extends Notifier<LoginState> {
     await _run(() => _auth.signIn(email: email, password: password));
   }
 
-  Future<void> signUp(
-    String emailInput,
-    String password,
-    String repeat,
-  ) async {
+  Future<void> signUp(String emailInput, String password, String repeat) async {
     final email = _validEmail(emailInput);
     if (email == null) return;
     final passwordError =
