@@ -54,6 +54,48 @@
         if (Math.abs(vv.height - window.innerHeight) < 1) window.scrollTo(0, 0);
       });
     })();
+
+    // Возврат после сворачивания (docs/09, шаг 6).
+    (function () {
+      // Safari может отобрать у страницы WebGL-контекст — сообщаем в журнал
+      // ошибок (его слушает Dart: lib/services/web_session_web.dart).
+      // Холсты Flutter могут лежать в shadow DOM, поэтому обходим и его.
+      function watchCanvases(root) {
+        root.querySelectorAll('*').forEach(function (el) {
+          if (el.tagName === 'CANVAS' && !el.__jfWatched) {
+            el.__jfWatched = true;
+            el.addEventListener('webglcontextlost', function () {
+              window.dispatchEvent(new CustomEvent('jf-webgl-lost'));
+            });
+          }
+          if (el.shadowRoot) watchCanvases(el.shadowRoot);
+        });
+      }
+      // Не чаще раза в полсекунды: обход DOM недешёвый.
+      var scanTimer = null;
+      new MutationObserver(function () {
+        if (scanTimer) return;
+        scanTimer = setTimeout(function () {
+          scanTimer = null;
+          watchCanvases(document);
+        }, 500);
+      }).observe(document.documentElement, { childList: true, subtree: true });
+
+      // Вкладка была скрыта дольше 10 минут — перезагружаем: данные живут
+      // в Firestore, вход сохранён, а «уснувшие» подписки и потерянная
+      // отрисовка так гарантированно восстанавливаются. Это обычная
+      // перезагрузка: pagehide снимет метку, unexpected_reload не будет.
+      var hiddenAt = null;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+          hiddenAt = Date.now();
+        } else if (hiddenAt !== null) {
+          var away = Date.now() - hiddenAt;
+          hiddenAt = null;
+          if (away > 10 * 60 * 1000) location.reload();
+        }
+      });
+    })();
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

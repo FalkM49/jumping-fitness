@@ -43,3 +43,11 @@ void rememberRoute(String route) {
 }
 
 String userAgent() => web.window.navigator.userAgent;
+
+/// Safari отобрал у страницы WebGL-контекст (событие шлёт web/index.html).
+void onWebglLost(void Function() callback) {
+  web.window.addEventListener(
+    'jf-webgl-lost',
+    ((web.Event _) => callback()).toJS,
+  );
+}

@@ -62,6 +62,8 @@ void _startWebErrorReporting() {
     ),
   );
 
+  onWebglLost(() => reportClientError('webgl_lost', 'WebGL-контекст потерян'));
+
   final crashedOn = startSessionAndTakeUnexpectedReload();
   if (crashedOn != null) {
     reportClientError(
