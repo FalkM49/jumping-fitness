@@ -22,7 +22,9 @@ export const STUDIO_TIMEZONE = 'Europe/Moscow';
  */
 export const WEB_APP_URL = 'https://jumpingfitness.web.app/';
 export const WEB_APP_ORIGINS: readonly RegExp[] = [
-  /^https:\/\/jumpingfitness\.(web\.app|firebaseapp\.com)$/,
+  // Основной сайт и каналы предпросмотра Firebase Hosting
+  // (jumpingfitness--<канал>-<хеш>.web.app) — для проверки до выкладки.
+  /^https:\/\/jumpingfitness(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/,
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
 ];
 

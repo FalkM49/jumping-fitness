@@ -86,6 +86,21 @@ describe('HTTP: протокол callable', { skip: !BASE && 'только npm r
     });
     assert.equal(call.headers.get('access-control-allow-origin'), 'https://jumpingfitness.web.app');
 
+    const preview = await fetch(`${BASE}/bookTraining`, {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://jumpingfitness--iphone-fix-a1b2c3d4.web.app' },
+    });
+    assert.equal(
+      preview.headers.get('access-control-allow-origin'),
+      'https://jumpingfitness--iphone-fix-a1b2c3d4.web.app',
+      'канал предпросмотра Firebase Hosting',
+    );
+    const lookalike = await fetch(`${BASE}/bookTraining`, {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://jumpingfitness.web.app.evil.example' },
+    });
+    assert.equal(lookalike.headers.get('access-control-allow-origin'), null);
+
     const foreign = await fetch(`${BASE}/bookTraining`, {
       method: 'OPTIONS',
       headers: { Origin: 'https://evil.example' },
