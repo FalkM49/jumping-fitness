@@ -31,10 +31,30 @@
       position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
       font: 600 22px -apple-system, system-ui, sans-serif; color: #C81E5E;
     }
+    /* Safari не должен двигать саму страницу под Flutter (клавиатура,
+       «оттягивание»), а двойной тап — увеличивать её (docs/09, шаг 5). */
+    html, body {
+      position: fixed; inset: 0; overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
   <div id="loading">Jumping Fitness</div>
+  <script>
+    // Клавиатура закрылась (видимая область снова во всю высоту окна), а
+    // Safari оставил страницу сдвинутой — возвращаем её на место. Иначе
+    // нажатия попадают мимо кнопок (docs/09, шаг 5).
+    (function () {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      vv.addEventListener('resize', function () {
+        if (Math.abs(vv.height - window.innerHeight) < 1) window.scrollTo(0, 0);
+      });
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
