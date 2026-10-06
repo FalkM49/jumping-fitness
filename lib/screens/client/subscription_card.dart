@@ -8,6 +8,7 @@ import '../../services/cloud_functions.dart';
 import '../../theme/app_radii.dart';
 import '../../theme/theme_context.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/ice_cube_icon.dart';
 import '../../widgets/info_notice.dart';
 import '../../widgets/petal_card.dart';
@@ -251,7 +252,7 @@ class _FreezeButton extends ConsumerWidget {
             textStyle: context.textStyles.freezeButtonLabel,
           ),
           onPressed: available
-              ? () => showDialog<void>(
+              ? () => showAppDialog<void>(
                   context: context,
                   builder: (_) =>
                       FreezeDialog(subscription: subscription, today: today),

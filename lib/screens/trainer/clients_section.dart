@@ -6,6 +6,7 @@ import '../../theme/theme_context.dart';
 import '../../trainer/client_list.dart';
 import '../../trainer/trainer_providers.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 import 'client_card_dialog.dart';
 
 /// Список клиентов под профилем тренера (ТЗ 6): поиск по ФИО на лету,
@@ -38,10 +39,14 @@ class _ClientsSectionState extends ConsumerState<ClientsSection> {
       children: [
         TextField(
           controller: _search,
-          textInputAction: TextInputAction.search,
-          // Нажатие вне поля снимает с него фокус. Иначе после закрытия
-          // любого окна Flutter вернёт фокус сюда и откроет клавиатуру.
+          // «Готово» на клавиатуре и нажатие вне поля убирают клавиатуру.
+          // Окна открываются через showAppDialog — фокус сюда не вернётся.
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+          // Не прокручивать ленту к полю при появлении клавиатуры: в Safari
+          // это сдвигало страницу (docs/09, шаг 4).
+          scrollPadding: EdgeInsets.zero,
           decoration: InputDecoration(
             hintText: 'Поиск по ФИО',
             prefixIcon: const Icon(Icons.search_rounded, size: 20),
@@ -145,7 +150,7 @@ class ClientRow extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => showDialog<void>(
+        onTap: () => showAppDialog<void>(
           context: context,
           builder: (_) => ClientCardDialog(clientId: client.profile.uid),
         ),

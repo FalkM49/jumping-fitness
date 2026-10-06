@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/session.dart';
@@ -10,6 +9,7 @@ import '../routing/app_router.dart';
 import '../screens/client/training_details_dialog.dart';
 import '../screens/trainer/trainer_cell_dialog.dart';
 import '../services/backend_providers.dart';
+import '../widgets/app_dialog.dart';
 import 'deep_link.dart';
 
 /// История уведомлений вошедшего пользователя.
@@ -54,7 +54,7 @@ void openDeepLink(WidgetRef ref, DeepLink link) {
   switch (link) {
     case OpenTrainingCell(:final day, :final slot):
       unawaited(
-        showDialog<void>(
+        showAppDialog<void>(
           context: context,
           builder: (_) => profile.isStaff
               ? TrainerCellDialog(day: day, slot: slot)

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/session.dart';
 import '../../client/calendar_cells.dart';
 import '../../notifications/web_push_prompt.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/trainer_badge.dart';
 import '../admin/trainer_requests_entry.dart';
@@ -38,7 +39,7 @@ class TrainerHomeScreen extends ConsumerWidget {
           const SectionTitle('Календарь (общий)'),
           StudioCalendar(
             mode: CalendarMode.trainer,
-            onOpenCell: (context, day, slot) => showDialog<void>(
+            onOpenCell: (context, day, slot) => showAppDialog<void>(
               context: context,
               builder: (_) => TrainerCellDialog(day: day, slot: slot),
             ),

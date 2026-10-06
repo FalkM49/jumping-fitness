@@ -5,6 +5,7 @@ import '../../auth/session.dart';
 import '../../client/client_providers.dart';
 import '../../models/models.dart';
 import '../../theme/theme_context.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/flower_art.dart';
 import '../../widgets/petal_card.dart';
 
@@ -73,7 +74,7 @@ class ProfileCard extends ConsumerWidget {
   }
 
   static void _showFlower(BuildContext context, Flower flower) {
-    showDialog<void>(
+    showAppDialog<void>(
       context: context,
       builder: (_) => FlowerDialog(flower: flower),
     );

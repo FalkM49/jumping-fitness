@@ -12,6 +12,7 @@ import '../../services/cloud_functions.dart';
 import '../../services/error_reporter.dart';
 import '../../theme/theme_context.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 
 /// Окно тренировки для клиента (ТЗ 3.1): дата, время, длительность,
 /// свободные места и кнопка записи. Закрывается тапом вне окна (ТЗ 9).
@@ -192,7 +193,7 @@ class _BookingActionState extends ConsumerState<_BookingAction> {
 
   Future<void> _cancel() async {
     final training = widget.cell.training;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Отменить запись?'),
@@ -321,7 +322,7 @@ class _ReasonButton extends StatelessWidget {
       tooltip: 'Почему недоступно',
       icon: const Icon(Icons.info_outline_rounded),
       onPressed: () => unawaited(
-        showDialog<void>(
+        showAppDialog<void>(
           context: context,
           builder: (context) => AlertDialog(
             content: Text(reason),

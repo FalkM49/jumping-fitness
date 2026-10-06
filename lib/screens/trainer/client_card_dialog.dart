@@ -12,6 +12,7 @@ import '../../theme/theme_context.dart';
 import '../../trainer/client_list.dart';
 import '../../trainer/trainer_providers.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/number_stepper.dart';
 
 /// Карточка клиента (ТЗ 6): ФИО, срок абонемента, сколько дней осталось,
@@ -109,7 +110,7 @@ class ClientCardDialog extends ConsumerWidget {
             ],
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: () => showDialog<void>(
+              onPressed: () => showAppDialog<void>(
                 context: context,
                 builder: (_) => RenewSubscriptionDialog(client: client),
               ),
@@ -162,6 +163,8 @@ class _RenewSubscriptionDialogState
 
   Future<CalendarDay?> _pickDate(CalendarDay initial) async {
     final today = ref.read(todayProvider);
+    // Как showAppDialog: без возврата фокуса и клавиатуры (docs/09, шаг 4).
+    FocusManager.instance.primaryFocus?.unfocus();
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime(initial.year, initial.month, initial.day),
@@ -178,7 +181,7 @@ class _RenewSubscriptionDialogState
   }
 
   Future<void> _submit() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Оформить абонемент?'),

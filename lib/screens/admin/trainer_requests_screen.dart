@@ -8,6 +8,7 @@ import '../../services/backend_providers.dart';
 import '../../services/cloud_functions.dart';
 import '../../theme/theme_context.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 
 /// Ожидающие заявки в тренеры — живой список из Firestore.
 final pendingTrainerRequestsProvider =
@@ -100,7 +101,7 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
 
   Future<void> _decide(_Decision decision) async {
     final request = widget.request;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(decision.confirmTitle),

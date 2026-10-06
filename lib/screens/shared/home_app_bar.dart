@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../notifications/notification_providers.dart';
 import '../../routing/app_router.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/app_title.dart';
 
 /// Общая шапка главных экранов клиента и тренера: слева — уведомления со
@@ -58,7 +59,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Выйти из аккаунта?'),

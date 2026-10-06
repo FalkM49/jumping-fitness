@@ -6,6 +6,7 @@ import '../../client/calendar_cells.dart';
 import '../../client/client_providers.dart';
 import '../../models/models.dart';
 import '../../notifications/web_push_prompt.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/info_notice.dart';
 import '../../widgets/section_title.dart';
 import '../shared/home_app_bar.dart';
@@ -58,7 +59,7 @@ class ClientHomeScreen extends ConsumerWidget {
           const SectionTitle('Календарь'),
           StudioCalendar(
             mode: CalendarMode.client,
-            onOpenCell: (context, day, slot) => showDialog<void>(
+            onOpenCell: (context, day, slot) => showAppDialog<void>(
               context: context,
               builder: (_) => TrainingDetailsDialog(day: day, slot: slot),
             ),

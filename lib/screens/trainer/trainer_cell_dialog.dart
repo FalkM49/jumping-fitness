@@ -11,6 +11,7 @@ import '../../theme/theme_context.dart';
 import '../../trainer/client_list.dart';
 import '../../trainer/trainer_providers.dart';
 import '../../utils/ru_format.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/number_stepper.dart';
 
 /// Окно ячейки календаря для тренера (ТЗ 3.2). Закрывается тапом вне окна.
@@ -66,6 +67,8 @@ class _TimeRow extends StatelessWidget {
   final ValueChanged<TimeOfDayHm> onChanged;
 
   Future<void> _pick(BuildContext context) async {
+    // Как showAppDialog: без возврата фокуса и клавиатуры (docs/09, шаг 4).
+    FocusManager.instance.primaryFocus?.unfocus();
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: value.hour, minute: value.minute),
@@ -151,7 +154,7 @@ Future<bool> _confirm(
   required String text,
   required String action,
 }) async {
-  final result = await showDialog<bool>(
+  final result = await showAppDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(title),
