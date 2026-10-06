@@ -17,9 +17,12 @@ typedef CellOpener =
 /// Общий календарь студии — один и тот же для клиента и тренера (ТЗ 1, 3).
 ///
 /// Сетка: столбцы — дни, в каждом две ячейки «Утро» и «Вечер» одного размера.
-/// Лента прокручивается по горизонтали: сначала ±30 дней от сегодня, у края
-/// подгружаются следующие 30 — фактически бесконечно. При открытии сегодняшний
-/// день по центру. У каждого месяца свой тон фона и подпись над его днями.
+/// Лента бесконечна в обе стороны; при открытии сегодняшний день по центру.
+/// У каждого месяца свой тон фона и подпись над его днями.
+///
+/// Устройство (docs/09, шаг 3): `CustomScrollView` с центром на «сегодня» —
+/// прошлое растёт влево, будущее вправо, строятся только видимые столбцы.
+/// Без подгрузки, `jumpTo` и упругой прокрутки: на iPhone они дёргали ленту.
 ///
 /// [mode] меняет только содержимое ячеек (ТЗ 3.1 / 3.2): клиент видит свои
 /// записи и «Отменено», тренер — места и «+» в пустых ячейках, а отменённая
@@ -40,7 +43,7 @@ class StudioCalendar extends ConsumerStatefulWidget {
   static const double monthBandHeight = 26;
   static const double headerHeight = 46;
   static const double cellHeight = 80;
-  static const int pageDays = 30;
+  static const double height = monthBandHeight + headerHeight + 2 * cellHeight;
 
   @override
   ConsumerState<StudioCalendar> createState() => _StudioCalendarState();
@@ -48,10 +51,11 @@ class StudioCalendar extends ConsumerStatefulWidget {
 
 class _StudioCalendarState extends ConsumerState<StudioCalendar> {
   static const double _w = StudioCalendar.columnWidth;
+  static const _futureKey = ValueKey('calendar-today-and-future');
 
-  final _scroll = ScrollController();
-  late CalendarDay _from;
-  late CalendarDay _to;
+  /// Нулевая точка ленты: смещение 0 — левый край этого дня.
+  late final CalendarDay _anchor;
+  ScrollController? _scroll;
 
   /// Страницы данных, на которые подписан календарь: видимые и по одной
   /// с каждой стороны (docs/09, шаг 2). Остальные закрываются сами.
@@ -60,70 +64,51 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
   /// Последние данные каждой страницы — чтобы при обновлении подписки
   /// ячейки не мигали.
   final Map<int, CalendarData> _lastData = {};
-  bool _centered = false;
-  bool _prepending = false;
 
   @override
   void initState() {
     super.initState();
-    final today = ref.read(todayProvider);
-    _from = today.addDays(-StudioCalendar.pageDays);
-    _to = today.addDays(StudioCalendar.pageDays);
-    _pages = _pagesAround(today, today);
-    _scroll.addListener(_onScroll);
+    _anchor = ref.read(todayProvider);
+    _pages = _pagesAround(_anchor, _anchor);
   }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _scroll?.dispose();
     super.dispose();
   }
 
-  /// У края ленты — ещё 30 дней. Слева после добавления сдвигаем прокрутку,
-  /// чтобы видимые дни остались на месте.
+  /// Контроллер создаётся, когда известна ширина: сегодня — по центру.
+  ScrollController _controllerFor(double viewport) {
+    final existing = _scroll;
+    if (existing != null) return existing;
+    final controller = ScrollController(
+      initialScrollOffset: -(viewport - _w) / 2,
+    )..addListener(_updatePages);
+    _pages = _visiblePages(controller.initialScrollOffset, viewport);
+    return _scroll = controller;
+  }
+
   static Set<int> _pagesAround(CalendarDay first, CalendarDay last) {
     final from = CalendarPages.of(first) - 1;
     final to = CalendarPages.of(last) + 1;
     return {for (var p = from; p <= to; p++) p};
   }
 
-  /// Видимые дни → страницы. Пересобираем подписки, только когда
-  /// набор страниц изменился, а не на каждый пиксель.
+  Set<int> _visiblePages(double offset, double viewport) => _pagesAround(
+    _anchor.addDays((offset / _w).floor()),
+    _anchor.addDays(((offset + viewport) / _w).ceil()),
+  );
+
+  /// Видимые дни → страницы. Подписки пересобираются, только когда набор
+  /// страниц изменился, а не на каждый пиксель.
   void _updatePages() {
-    final position = _scroll.position;
-    final first = _from.addDays((position.pixels / _w).floor());
-    final last = _from.addDays(
-      ((position.pixels + position.viewportDimension) / _w).ceil(),
-    );
-    final pages = _pagesAround(first, last);
+    final scroll = _scroll;
+    if (scroll == null || !scroll.hasClients) return;
+    final position = scroll.position;
+    if (!position.hasPixels || !position.hasViewportDimension) return;
+    final pages = _visiblePages(position.pixels, position.viewportDimension);
     if (!setEquals(pages, _pages)) setState(() => _pages = pages);
-  }
-
-  void _onScroll() {
-    if (!_scroll.hasClients || !_centered) return;
-    _updatePages();
-    final position = _scroll.position;
-    if (position.pixels > position.maxScrollExtent - _w * 6) {
-      setState(() => _to = _to.addDays(StudioCalendar.pageDays));
-    } else if (position.pixels < _w * 6 && !_prepending) {
-      _prepending = true;
-      setState(() => _from = _from.addDays(-StudioCalendar.pageDays));
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) {
-          _scroll.jumpTo(_scroll.offset + _w * StudioCalendar.pageDays);
-        }
-        _prepending = false;
-      });
-    }
-  }
-
-  void _centerToday(CalendarDay today) {
-    if (_centered || !_scroll.hasClients) return;
-    final viewport = _scroll.position.viewportDimension;
-    final target = today.daysSince(_from) * _w - (viewport - _w) / 2;
-    _scroll.jumpTo(target.clamp(0, _scroll.position.maxScrollExtent));
-    _centered = true;
-    _updatePages();
   }
 
   @override
@@ -139,8 +124,15 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
     }
     _lastData.removeWhere((page, _) => !_pages.contains(page));
 
-    final days = [for (var d = _from; !d.isAfter(_to); d = d.addDays(1)) d];
-    WidgetsBinding.instance.addPostFrameCallback((_) => _centerToday(today));
+    Widget column(CalendarDay day) => _DayColumn(
+      key: ValueKey('day-${day.toKey()}'),
+      mode: widget.mode,
+      day: day,
+      today: today,
+      now: now,
+      data: pageData[CalendarPages.of(day)],
+      onOpen: (slot) => widget.onOpenCell(context, day, slot),
+    );
 
     final palette = context.palette;
     return DecoratedBox(
@@ -151,37 +143,66 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
       ),
       child: ClipRRect(
         borderRadius: AppRadii.dense,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _RowLabels(),
-            Expanded(
-              child: SingleChildScrollView(
-                controller: _scroll,
-                scrollDirection: Axis.horizontal,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _MonthBand(days: days, scroll: _scroll),
-                    Row(
+        child: SizedBox(
+          height: StudioCalendar.height,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _RowLabels(),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scroll = _controllerFor(constraints.maxWidth);
+                    return Stack(
                       children: [
-                        for (final day in days)
-                          _DayColumn(
-                            mode: widget.mode,
-                            day: day,
-                            today: today,
-                            now: now,
-                            data: pageData[CalendarPages.of(day)],
-                            onOpen: (slot) =>
-                                widget.onOpenCell(context, day, slot),
+                        // Один Material на всю ленту: ячейки рисуют фон
+                        // через Ink, без отдельного Material в каждой.
+                        Material(
+                          type: MaterialType.transparency,
+                          child: CustomScrollView(
+                            controller: scroll,
+                            scrollDirection: Axis.horizontal,
+                            center: _futureKey,
+                            physics: const ClampingScrollPhysics(),
+                            slivers: [
+                              // Прошлое: индекс 0 — вчера, дальше влево.
+                              SliverFixedExtentList(
+                                itemExtent: _w,
+                                delegate: SliverChildBuilderDelegate(
+                                  (_, i) => column(_anchor.addDays(-1 - i)),
+                                ),
+                              ),
+                              SliverFixedExtentList(
+                                key: _futureKey,
+                                itemExtent: _w,
+                                delegate: SliverChildBuilderDelegate(
+                                  (_, i) => column(_anchor.addDays(i)),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: StudioCalendar.monthBandHeight,
+                          child: IgnorePointer(
+                            child: _MonthLabels(
+                              scroll: scroll,
+                              viewport: constraints.maxWidth,
+                              anchor: _anchor,
+                              today: today,
+                            ),
+                          ),
+                        ),
                       ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -215,89 +236,83 @@ class _RowLabels extends StatelessWidget {
   }
 }
 
-/// Полоса месяцев: тон месяца на всю его группу дней и подпись, которая
-/// «прилипает» к левому краю, пока видна хоть часть месяца.
-class _MonthBand extends StatelessWidget {
-  const _MonthBand({required this.days, required this.scroll});
+/// Подписи месяцев над лентой. Тон месяца рисует сам столбец дня, здесь —
+/// только текст: подпись «прилипает» к левому краю, пока виден хоть один
+/// день месяца, и её выталкивает подпись следующего месяца.
+///
+/// Перестраиваются одна-две подписи, а не вся полоса (docs/09, шаг 3).
+class _MonthLabels extends StatelessWidget {
+  const _MonthLabels({
+    required this.scroll,
+    required this.viewport,
+    required this.anchor,
+    required this.today,
+  });
 
-  final List<CalendarDay> days;
   final ScrollController scroll;
+  final double viewport;
+  final CalendarDay anchor;
+  final CalendarDay today;
 
   static const double _labelWidth = 110;
+  static const double _inset = 8;
 
   @override
   Widget build(BuildContext context) {
-    const w = StudioCalendar.columnWidth;
-    final palette = context.palette;
     final style = Theme.of(context).textTheme.labelMedium?.copyWith(
       color: context.colors.onSurface,
       fontWeight: FontWeight.w700,
     );
+    const w = StudioCalendar.columnWidth;
 
-    // Группы подряд идущих дней одного месяца: (индекс первого дня, число дней).
-    final groups = <(int, int, CalendarDay)>[];
-    for (var i = 0; i < days.length; i++) {
-      if (i == 0 || days[i].month != days[i - 1].month) {
-        groups.add((i, 1, days[i]));
-      } else {
-        final (start, count, first) = groups.removeLast();
-        groups.add((start, count + 1, first));
-      }
-    }
-    final currentYear = days[days.length ~/ 2].year;
+    return ListenableBuilder(
+      listenable: scroll,
+      builder: (context, _) {
+        // До первой раскладки позиции ещё нет — берём начальное смещение.
+        final offset = scroll.hasClients && scroll.position.hasPixels
+            ? scroll.position.pixels
+            : scroll.initialScrollOffset;
+        final first = anchor.addDays((offset / w).floor());
+        final last = anchor.addDays(((offset + viewport) / w).floor());
 
-    return SizedBox(
-      width: days.length * w,
-      height: StudioCalendar.monthBandHeight,
-      child: AnimatedBuilder(
-        animation: scroll,
-        builder: (context, _) {
-          final offset = scroll.hasClients ? scroll.offset : 0.0;
-          return Stack(
-            children: [
-              for (final (start, count, first) in groups) ...[
-                Positioned(
-                  left: start * w,
-                  width: count * w,
-                  top: 0,
-                  bottom: 0,
-                  child: ColoredBox(
-                    color: palette.monthToneFor(
-                      DateTime(first.year, first.month),
-                    ),
-                  ),
+        // Месяцы, попавшие в видимую часть, и x начала каждого.
+        final labels = <Widget>[];
+        var month = DateTime(first.year, first.month);
+        while (!DateTime(last.year, last.month).isBefore(month)) {
+          final start = CalendarDay(month.year, month.month, 1);
+          final next = DateTime(month.year, month.month + 1);
+          final nextStart = CalendarDay(next.year, next.month, 1);
+          final startX = start.daysSince(anchor) * w - offset;
+          final endX = nextStart.daysSince(anchor) * w - offset;
+          final left = startX + _inset < _inset
+              ? _inset.clamp(-double.infinity, endX - _labelWidth)
+              : startX + _inset;
+          labels.add(
+            Positioned(
+              left: left,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Text(
+                  month.year == today.year
+                      ? RuFormat.monthName(month.month)
+                      : '${RuFormat.monthName(month.month)} ${month.year}',
+                  style: style,
                 ),
-                Positioned(
-                  left: _stickyLeft(offset, start * w, (start + count) * w),
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: Text(
-                      first.year == currentYear
-                          ? RuFormat.monthName(first.month)
-                          : '${RuFormat.monthName(first.month)} ${first.year}',
-                      style: style,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+              ),
+            ),
           );
-        },
-      ),
+          month = next;
+        }
+        return ClipRect(child: Stack(children: labels));
+      },
     );
-  }
-
-  static double _stickyLeft(double offset, double groupStart, double groupEnd) {
-    final min = groupStart + 8;
-    final max = groupEnd - _labelWidth;
-    if (max <= min) return min;
-    return (offset + 8).clamp(min, max);
   }
 }
 
 class _DayColumn extends StatelessWidget {
   const _DayColumn({
+    super.key,
     required this.mode,
     required this.day,
     required this.today,
@@ -326,32 +341,42 @@ class _DayColumn extends StatelessWidget {
         ? Color.alphaBlend(colors.onSurface.withValues(alpha: 0.05), tone)
         : tone;
 
-    return Container(
-      width: StudioCalendar.columnWidth,
-      color: background,
-      // Сегодня — тонкая рамка вокруг всего столбца (утро + вечер).
-      foregroundDecoration: isToday
-          ? BoxDecoration(
-              border: Border.all(color: colors.primary, width: 1.5),
-              borderRadius: AppRadii.dense,
-            )
-          : null,
-      child: Column(
-        children: [
-          _DayHeader(day: day, isToday: isToday),
-          for (final slot in DaySlot.values)
-            _CalendarCell(
-              key: ValueKey('cell-${slotKeyOf(day, slot)}'),
-              cell: data?.cellFor(mode, day, slot, now),
-              // Тренер: пустая ячейка сегодня и дальше — «+», новая тренировка.
-              canCreate:
-                  mode == CalendarMode.trainer &&
-                  data != null &&
-                  !day.isBefore(today),
-              onTap: () => onOpen(slot),
+    return Column(
+      children: [
+        // Полоса месяца над днём — тон месяца без затемнения прошлого.
+        SizedBox(
+          height: StudioCalendar.monthBandHeight,
+          child: ColoredBox(color: tone),
+        ),
+        Expanded(
+          child: Container(
+            color: background,
+            // Сегодня — тонкая рамка вокруг всего столбца (утро + вечер).
+            foregroundDecoration: isToday
+                ? BoxDecoration(
+                    border: Border.all(color: colors.primary, width: 1.5),
+                    borderRadius: AppRadii.dense,
+                  )
+                : null,
+            child: Column(
+              children: [
+                _DayHeader(day: day, isToday: isToday),
+                for (final slot in DaySlot.values)
+                  _CalendarCell(
+                    key: ValueKey('cell-${slotKeyOf(day, slot)}'),
+                    cell: data?.cellFor(mode, day, slot, now),
+                    // Тренер: пустая ячейка сегодня и дальше — «+».
+                    canCreate:
+                        mode == CalendarMode.trainer &&
+                        data != null &&
+                        !day.isBefore(today),
+                    onTap: () => onOpen(slot),
+                  ),
+              ],
             ),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -512,20 +537,24 @@ class _CalendarCell extends StatelessWidget {
       ),
     };
 
+    final shape = RoundedRectangleBorder(
+      borderRadius: AppRadii.dense,
+      side: border == null
+          ? BorderSide.none
+          : BorderSide(color: border, width: 0.8),
+    );
+
     return SizedBox(
       height: StudioCalendar.cellHeight,
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Material(
-          color: fill ?? Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadii.dense,
-            side: border == null
-                ? BorderSide.none
-                : BorderSide(color: border, width: 0.8),
+        child: Ink(
+          decoration: ShapeDecoration(
+            color: fill ?? Colors.transparent,
+            shape: shape,
           ),
-          clipBehavior: Clip.antiAlias,
           child: InkWell(
+            customBorder: shape,
             onTap: tappable ? onTap : null,
             child: Padding(
               padding: const EdgeInsets.all(3),

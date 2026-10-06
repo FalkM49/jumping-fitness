@@ -269,6 +269,71 @@ void main() {
       expect(s.studio.openStreams, lessThanOrEqualTo(initial + 3));
     }
   });
+  group('лента календаря (docs/09, шаг 3)', () {
+    final calendar = find.byWidgetPredicate(
+      (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+    );
+    final columns = find.byWidgetPredicate(
+      (w) =>
+          w.key is ValueKey<String> &&
+          (w.key! as ValueKey<String>).value.startsWith('day-'),
+    );
+    Finder day(String key) => find.byKey(ValueKey('day-$key'));
+
+    testWidgets('сегодня по центру ленты, подпись текущего месяца', (
+      tester,
+    ) async {
+      await Setup().pump(tester);
+      final view = tester.getRect(calendar);
+      final todayCenter = tester.getCenter(day(today.toKey()));
+      expect(todayCenter.dx, closeTo(view.center.dx, 1));
+      expect(find.text('Сентябрь'), findsOneWidget);
+    });
+
+    testWidgets('бесконечна в обе стороны, строятся только видимые дни', (
+      tester,
+    ) async {
+      await Setup().pump(tester);
+      expect(columns.evaluate().length, lessThanOrEqualTo(30));
+
+      // Полгода вперёд — подпись нового месяца, столбцов по-прежнему мало.
+      for (var i = 0; i < 25; i++) {
+        await tester.drag(
+          calendar,
+          const Offset(-StudioCalendar.columnWidth * 7, 0),
+        );
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(columns.evaluate().length, lessThanOrEqualTo(30));
+      expect(find.textContaining('Март'), findsOneWidget);
+      expect(day(today.toKey()), findsNothing);
+
+      // И год назад от сегодня — лента не кончается слева.
+      for (var i = 0; i < 80; i++) {
+        await tester.drag(
+          calendar,
+          const Offset(StudioCalendar.columnWidth * 7, 0),
+        );
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(columns.evaluate().length, lessThanOrEqualTo(30));
+      expect(find.textContaining('2025'), findsWidgets);
+    });
+
+    testWidgets('на стыке месяцев видны обе подписи', (tester) async {
+      await Setup().pump(tester);
+      // 30 сентября → 1 октября: три дня вперёд, стык в кадре.
+      await tester.drag(
+        calendar,
+        const Offset(-StudioCalendar.columnWidth * 2, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Сентябрь'), findsOneWidget);
+      expect(find.text('Октябрь'), findsOneWidget);
+    });
+  });
   group('профиль', () {
     testWidgets('«В этом месяце ты:», цветок и окно с его значением', (
       tester,
