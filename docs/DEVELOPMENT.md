@@ -289,3 +289,23 @@ dart fix --apply --code=migrate_design_widgets
 ```
 
 Его стоит выполнить, когда Firebase-плагины и `google_fonts` тоже перейдут на новый пакет.
+
+---
+
+## Веб-версия (iPhone)
+
+Сборка — только через скрипт, он задаёт нужные флаги (docs/09, шаг 7):
+
+```bash
+powershell -ExecutionPolicy Bypass -File tool\build_web.ps1            # боевая
+powershell -ExecutionPolicy Bypass -File tool\build_web.ps1 -Emulators # локальные эмуляторы + npm run dev:api
+powershell -ExecutionPolicy Bypass -File tool\build_web.ps1 -Wasm      # эксперимент с WebAssembly
+```
+
+- `--no-web-resources-cdn` — движок CanvasKit с нашего хостинга, не с gstatic.com.
+- `--source-maps` — `main.dart.js.map` для расшифровки стеков из журнала ошибок.
+- `APP_VERSION` — версия из `pubspec.yaml`, попадает в отчёты (`lib/main.dart`).
+- `web/flutter_bootstrap.js` — свой загрузчик без устаревшего service worker Flutter
+  (и снимает его у тех, кто открывал сайт раньше); push-воркер — `web/firebase-messaging-sw.js`.
+- Журнал ошибок веба: `lib/services/error_reporter.dart` → функция `reportClientError`
+  → логи Yandex Cloud. Работает только в release-сборке для веба.
