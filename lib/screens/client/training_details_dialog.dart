@@ -23,17 +23,15 @@ class TrainingDetailsDialog extends ConsumerWidget {
     super.key,
     required this.day,
     required this.slot,
-    required this.range,
   });
 
   final CalendarDay day;
   final DaySlot slot;
-  final DayRange range;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = ref.watch(clockProvider)();
-    final data = ref.watch(calendarDataProvider(range)).value;
+    final data = ref.watch(calendarDayProvider(day)).value;
     final cell = data?.cellAt(day, slot, now);
     final textTheme = Theme.of(context).textTheme;
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,12 +12,7 @@ import '../../utils/ru_format.dart';
 
 /// Что сделать по нажатию на ячейку: экран роли открывает своё окно.
 typedef CellOpener =
-    void Function(
-      BuildContext context,
-      CalendarDay day,
-      DaySlot slot,
-      DayRange range,
-    );
+    void Function(BuildContext context, CalendarDay day, DaySlot slot);
 
 /// Общий календарь студии — один и тот же для клиента и тренера (ТЗ 1, 3).
 ///
@@ -56,7 +52,14 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
   final _scroll = ScrollController();
   late CalendarDay _from;
   late CalendarDay _to;
-  CalendarData? _lastData;
+
+  /// Страницы данных, на которые подписан календарь: видимые и по одной
+  /// с каждой стороны (docs/09, шаг 2). Остальные закрываются сами.
+  Set<int> _pages = {};
+
+  /// Последние данные каждой страницы — чтобы при обновлении подписки
+  /// ячейки не мигали.
+  final Map<int, CalendarData> _lastData = {};
   bool _centered = false;
   bool _prepending = false;
 
@@ -66,6 +69,7 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
     final today = ref.read(todayProvider);
     _from = today.addDays(-StudioCalendar.pageDays);
     _to = today.addDays(StudioCalendar.pageDays);
+    _pages = _pagesAround(today, today);
     _scroll.addListener(_onScroll);
   }
 
@@ -77,8 +81,27 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
 
   /// У края ленты — ещё 30 дней. Слева после добавления сдвигаем прокрутку,
   /// чтобы видимые дни остались на месте.
+  static Set<int> _pagesAround(CalendarDay first, CalendarDay last) {
+    final from = CalendarPages.of(first) - 1;
+    final to = CalendarPages.of(last) + 1;
+    return {for (var p = from; p <= to; p++) p};
+  }
+
+  /// Видимые дни → страницы. Пересобираем подписки, только когда
+  /// набор страниц изменился, а не на каждый пиксель.
+  void _updatePages() {
+    final position = _scroll.position;
+    final first = _from.addDays((position.pixels / _w).floor());
+    final last = _from.addDays(
+      ((position.pixels + position.viewportDimension) / _w).ceil(),
+    );
+    final pages = _pagesAround(first, last);
+    if (!setEquals(pages, _pages)) setState(() => _pages = pages);
+  }
+
   void _onScroll() {
     if (!_scroll.hasClients || !_centered) return;
+    _updatePages();
     final position = _scroll.position;
     if (position.pixels > position.maxScrollExtent - _w * 6) {
       setState(() => _to = _to.addDays(StudioCalendar.pageDays));
@@ -100,18 +123,21 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
     final target = today.daysSince(_from) * _w - (viewport - _w) / 2;
     _scroll.jumpTo(target.clamp(0, _scroll.position.maxScrollExtent));
     _centered = true;
+    _updatePages();
   }
 
   @override
   Widget build(BuildContext context) {
     final today = ref.watch(todayProvider);
     final now = ref.watch(clockProvider)();
-    final range = (from: _from, to: _to);
-    final async = ref.watch(calendarDataProvider(range));
-    // Пока подгружается новый отрезок, показываем прежние данные —
-    // чтобы ячейки не мигали при прокрутке.
-    final data = async.value ?? _lastData;
-    if (async.hasValue) _lastData = async.value;
+    final pageData = <int, CalendarData>{};
+    for (final page in _pages) {
+      final value = ref.watch(calendarPageProvider(page)).value;
+      if (value != null) _lastData[page] = value;
+      final data = value ?? _lastData[page];
+      if (data != null) pageData[page] = data;
+    }
+    _lastData.removeWhere((page, _) => !_pages.contains(page));
 
     final days = [for (var d = _from; !d.isAfter(_to); d = d.addDays(1)) d];
     WidgetsBinding.instance.addPostFrameCallback((_) => _centerToday(today));
@@ -145,9 +171,9 @@ class _StudioCalendarState extends ConsumerState<StudioCalendar> {
                             day: day,
                             today: today,
                             now: now,
-                            data: data,
+                            data: pageData[CalendarPages.of(day)],
                             onOpen: (slot) =>
-                                widget.onOpenCell(context, day, slot, range),
+                                widget.onOpenCell(context, day, slot),
                           ),
                       ],
                     ),

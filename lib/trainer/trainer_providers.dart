@@ -39,7 +39,8 @@ final clientSummariesProvider = Provider<AsyncValue<List<ClientSummary>>>((
 });
 
 /// Записавшиеся на тренировку (активные записи).
-final trainingBookingsProvider = StreamProvider.family<List<Booking>, String>(
-  (ref, trainingId) =>
-      ref.watch(studioRepositoryProvider).watchTrainingBookings(trainingId),
-);
+final trainingBookingsProvider = StreamProvider.autoDispose
+    .family<List<Booking>, String>(
+      (ref, trainingId) =>
+          ref.watch(studioRepositoryProvider).watchTrainingBookings(trainingId),
+    );

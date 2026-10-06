@@ -58,10 +58,9 @@ class ClientHomeScreen extends ConsumerWidget {
           const SectionTitle('Календарь'),
           StudioCalendar(
             mode: CalendarMode.client,
-            onOpenCell: (context, day, slot, range) => showDialog<void>(
+            onOpenCell: (context, day, slot) => showDialog<void>(
               context: context,
-              builder: (_) =>
-                  TrainingDetailsDialog(day: day, slot: slot, range: range),
+              builder: (_) => TrainingDetailsDialog(day: day, slot: slot),
             ),
           ),
           const SectionTitle('Профиль'),

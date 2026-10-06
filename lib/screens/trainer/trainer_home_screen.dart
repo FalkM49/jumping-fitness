@@ -38,10 +38,9 @@ class TrainerHomeScreen extends ConsumerWidget {
           const SectionTitle('Календарь (общий)'),
           StudioCalendar(
             mode: CalendarMode.trainer,
-            onOpenCell: (context, day, slot, range) => showDialog<void>(
+            onOpenCell: (context, day, slot) => showDialog<void>(
               context: context,
-              builder: (_) =>
-                  TrainerCellDialog(day: day, slot: slot, range: range),
+              builder: (_) => TrainerCellDialog(day: day, slot: slot),
             ),
           ),
           const SectionTitle('Профиль'),

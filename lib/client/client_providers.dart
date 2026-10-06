@@ -19,35 +19,69 @@ final todayProvider = Provider<CalendarDay>(
   (ref) => CalendarDay.ofInstant(ref.watch(clockProvider)()),
 );
 
-final _trainingsProvider = StreamProvider.family<List<Training>, DayRange>(
-  (ref, range) =>
-      ref.watch(studioRepositoryProvider).watchTrainings(range.from, range.to),
-);
+/// Календарь грузится страницами по 14 дней с фиксированными границами
+/// (docs/09, шаг 2): страница N — дни `[эпоха + 14·N, эпоха + 14·N + 13]`.
+/// При прокрутке на день запрос не пересоздаётся, а ушедшие из вида
+/// страницы закрываются сами (`autoDispose`): одновременно живут 3–4.
+abstract final class CalendarPages {
+  static const int days = 14;
 
-final _slotsProvider = StreamProvider.family<List<CalendarSlot>, DayRange>(
-  (ref, range) =>
-      ref.watch(studioRepositoryProvider).watchSlots(range.from, range.to),
-);
+  /// Понедельник — страницы совпадают с парами недель.
+  static final CalendarDay epoch = CalendarDay(2024, 1, 1);
 
-final _myBookingsProvider =
-    StreamProvider.family<List<Booking>, ({String uid, CalendarDay from})>(
-      (ref, key) => ref
+  /// Номер страницы, на которой лежит [day].
+  static int of(CalendarDay day) {
+    final offset = day.daysSince(epoch);
+    return (offset / days).floor();
+  }
+
+  static DayRange range(int page) {
+    final from = epoch.addDays(page * days);
+    return (from: from, to: from.addDays(days - 1));
+  }
+}
+
+final _trainingsProvider = StreamProvider.autoDispose
+    .family<List<Training>, int>((ref, page) {
+      final range = CalendarPages.range(page);
+      return ref
           .watch(studioRepositoryProvider)
-          .watchMyBookings(key.uid, key.from.atStudioTime(0, 0)),
-    );
+          .watchTrainings(range.from, range.to);
+    });
 
-/// Всё, что нужно календарю на отрезок дней. `null` — ещё грузится.
-final calendarDataProvider =
-    Provider.family<AsyncValue<CalendarData>, DayRange>((ref, range) {
+final _slotsProvider = StreamProvider.autoDispose
+    .family<List<CalendarSlot>, int>((ref, page) {
+      final range = CalendarPages.range(page);
+      return ref
+          .watch(studioRepositoryProvider)
+          .watchSlots(range.from, range.to);
+    });
+
+final _myBookingsProvider = StreamProvider.autoDispose
+    .family<List<Booking>, ({String uid, int page})>((ref, key) {
+      final range = CalendarPages.range(key.page);
+      return ref
+          .watch(studioRepositoryProvider)
+          .watchMyBookings(
+            key.uid,
+            range.from.atStudioTime(0, 0),
+            range.to.addDays(1).atStudioTime(0, 0),
+          );
+    });
+
+/// Всё, что нужно календарю на страницу дней. Живёт, пока её кто-то
+/// смотрит: календарь (видимые страницы и соседние) или открытое окно ячейки.
+final calendarPageProvider = Provider.autoDispose
+    .family<AsyncValue<CalendarData>, int>((ref, page) {
       // Свои записи нужны только клиенту: тренер видит тренировки целиком.
       final profile = ref.watch(currentProfileProvider);
       final uid = profile == null || profile.isStaff ? null : profile.uid;
-      final trainings = ref.watch(_trainingsProvider(range));
-      final slots = ref.watch(_slotsProvider(range));
+      final trainings = ref.watch(_trainingsProvider(page));
+      final slots = ref.watch(_slotsProvider(page));
       final settings = ref.watch(settingsProvider);
       final bookings = uid == null
           ? const AsyncData(<Booking>[])
-          : ref.watch(_myBookingsProvider((uid: uid, from: range.from)));
+          : ref.watch(_myBookingsProvider((uid: uid, page: page)));
 
       for (final part in <AsyncValue<Object?>>[
         trainings,
@@ -74,6 +108,12 @@ final calendarDataProvider =
         ),
       );
     });
+
+/// Данные страницы, на которой лежит [day], — для окна ячейки.
+final calendarDayProvider = Provider.autoDispose
+    .family<AsyncValue<CalendarData>, CalendarDay>(
+      (ref, day) => ref.watch(calendarPageProvider(CalendarPages.of(day))),
+    );
 
 /// Текущий абонемент клиента (`null` — абонемента нет).
 final currentSubscriptionProvider = StreamProvider<Subscription?>((ref) {

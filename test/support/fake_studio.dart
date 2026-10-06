@@ -31,9 +31,25 @@ class FakeStudio implements StudioRepository, StudioFunctions {
   final _changed = StreamController<void>.broadcast();
   void notify() => _changed.add(null);
 
-  Stream<T> _watch<T>(T Function() read) async* {
-    yield read();
-    yield* _changed.stream.map((_) => read());
+  /// Сколько «подписок» сейчас открыто — для проверки, что календарь
+  /// не копит запросы при прокрутке (docs/09, шаг 2).
+  int openStreams = 0;
+
+  Stream<T> _watch<T>(T Function() read) {
+    StreamSubscription<void>? changes;
+    late final StreamController<T> controller;
+    controller = StreamController<T>(
+      onListen: () {
+        openStreams++;
+        controller.add(read());
+        changes = _changed.stream.listen((_) => controller.add(read()));
+      },
+      onCancel: () {
+        openStreams--;
+        return changes?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   // --------------------------------------------------------- чтение
@@ -60,10 +76,17 @@ class FakeStudio implements StudioRepository, StudioFunctions {
       );
 
   @override
-  Stream<List<Booking>> watchMyBookings(String uid, DateTime from) => _watch(
+  Stream<List<Booking>> watchMyBookings(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) => _watch(
     () => [
       for (final b in bookings.values)
-        if (b.clientId == uid && !b.trainingStartAt.isBefore(from)) b,
+        if (b.clientId == uid &&
+            !b.trainingStartAt.isBefore(from) &&
+            b.trainingStartAt.isBefore(to))
+          b,
     ],
   );
 

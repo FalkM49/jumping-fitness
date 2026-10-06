@@ -16,7 +16,7 @@ abstract interface class StudioRepository {
   Stream<List<CalendarSlot>> watchSlots(CalendarDay from, CalendarDay to);
 
   /// Записи клиента [uid] на тренировки, начинающиеся не раньше [from].
-  Stream<List<Booking>> watchMyBookings(String uid, DateTime from);
+  Stream<List<Booking>> watchMyBookings(String uid, DateTime from, DateTime to);
 
   Stream<Subscription?> watchSubscription(String subscriptionId);
 
@@ -79,13 +79,18 @@ class FirestoreStudioRepository implements StudioRepository {
       .map((q) => _parseAll(q.docs, CalendarSlot.fromSnapshot));
 
   @override
-  Stream<List<Booking>> watchMyBookings(String uid, DateTime from) => _db
+  Stream<List<Booking>> watchMyBookings(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) => _db
       // Правила пускают к группе bookings только с фильтром по своему uid.
       .collectionGroup(FirestorePaths.bookings)
       .where('clientId', isEqualTo: uid)
       .where(
         'trainingStartAt',
         isGreaterThanOrEqualTo: Timestamp.fromDate(from),
+        isLessThan: Timestamp.fromDate(to),
       )
       .snapshots()
       .map((q) => _parseAll(q.docs, Booking.fromSnapshot));
@@ -141,8 +146,11 @@ class UnavailableStudioRepository implements StudioRepository {
       Stream.value(const []);
 
   @override
-  Stream<List<Booking>> watchMyBookings(String uid, DateTime from) =>
-      Stream.value(const []);
+  Stream<List<Booking>> watchMyBookings(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) => Stream.value(const []);
 
   @override
   Stream<Subscription?> watchSubscription(String subscriptionId) =>

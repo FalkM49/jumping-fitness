@@ -53,13 +53,12 @@ void openDeepLink(WidgetRef ref, DeepLink link) {
 
   switch (link) {
     case OpenTrainingCell(:final day, :final slot):
-      final range = (from: day, to: day);
       unawaited(
         showDialog<void>(
           context: context,
           builder: (_) => profile.isStaff
-              ? TrainerCellDialog(day: day, slot: slot, range: range)
-              : TrainingDetailsDialog(day: day, slot: slot, range: range),
+              ? TrainerCellDialog(day: day, slot: slot)
+              : TrainingDetailsDialog(day: day, slot: slot),
         ),
       );
     case OpenTrainerRequests() when profile.isAdmin:

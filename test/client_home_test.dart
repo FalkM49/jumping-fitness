@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jumping_fitness/models/models.dart';
 import 'package:jumping_fitness/screens/client/subscription_card.dart';
+import 'package:jumping_fitness/screens/shared/studio_calendar.dart';
 import 'package:jumping_fitness/services/cloud_functions.dart';
 import 'package:jumping_fitness/widgets/flower_art.dart';
 
@@ -242,6 +243,32 @@ void main() {
     });
   });
 
+  testWidgets('прокрутка на 10 страниц не копит подписки Firestore', (
+    tester,
+  ) async {
+    // docs/09, шаг 2: раньше каждая подгрузка открывала новый набор
+    // запросов на растущий отрезок, а старые не закрывались.
+    final s = Setup();
+    await s.pump(tester);
+    final initial = s.studio.openStreams;
+    expect(initial, greaterThan(0));
+
+    final calendar = find.byWidgetPredicate(
+      (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+    );
+    // 10 страниц по 14 дней вперёд, потом столько же назад.
+    const step = StudioCalendar.columnWidth * 7;
+    for (var i = 0; i < 20; i++) {
+      await tester.drag(calendar, const Offset(-step, 0));
+      await tester.pumpAndSettle();
+      expect(s.studio.openStreams, lessThanOrEqualTo(initial + 3));
+    }
+    for (var i = 0; i < 20; i++) {
+      await tester.drag(calendar, const Offset(step, 0));
+      await tester.pumpAndSettle();
+      expect(s.studio.openStreams, lessThanOrEqualTo(initial + 3));
+    }
+  });
   group('профиль', () {
     testWidgets('«В этом месяце ты:», цветок и окно с его значением', (
       tester,

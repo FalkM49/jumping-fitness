@@ -19,20 +19,14 @@ import '../../widgets/number_stepper.dart';
 /// Заполненная — правка времени, длительности и мест, список записавшихся
 /// с «мусоркой» и отмена тренировки. Все изменения — через Cloud Functions.
 class TrainerCellDialog extends ConsumerWidget {
-  const TrainerCellDialog({
-    super.key,
-    required this.day,
-    required this.slot,
-    required this.range,
-  });
+  const TrainerCellDialog({super.key, required this.day, required this.slot});
 
   final CalendarDay day;
   final DaySlot slot;
-  final DayRange range;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(calendarDataProvider(range)).value;
+    final data = ref.watch(calendarDayProvider(day)).value;
     final training = data?.activeTrainingAt(day, slot);
     final settings = data?.settings ?? AppSettings.fallback;
 
