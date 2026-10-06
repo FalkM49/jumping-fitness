@@ -121,3 +121,37 @@ describe('rejectTrainerRequest', () => {
     assert.equal((await read(`trainer_requests/${applicant.uid}`)).status, 'pending');
   });
 });
+
+describe('reportClientError — журнал ошибок приложения', () => {
+  const report = (overrides = {}) => ({
+    kind: 'function_error',
+    message: 'TypeError: x',
+    stack: 'at main.dart.js:1',
+    route: '/',
+    userAgent: 'iPhone',
+    standalone: true,
+    appVersion: '0.1.0+1',
+    ...overrides,
+  });
+
+  it('принимает отчёт с входом и без; длинный текст и неизвестный тип не ломают вызов', async () => {
+    const first = await call('reportClientError', report(), trainer.idToken);
+    assert.deepEqual(first.result, { logged: true }, JSON.stringify(first));
+    const anonymous = await call('reportClientError', report());
+    assert.deepEqual(anonymous.result, { logged: true }, JSON.stringify(anonymous));
+    const odd = await call('reportClientError', report({ kind: 'что-то', message: 'x'.repeat(10_000) }), trainer.idToken);
+    assert.deepEqual(odd.result, { logged: true });
+    assert.deepEqual((await call('reportClientError', null, trainer.idToken)).result, { logged: true });
+  });
+
+  // Счётчик живёт в памяти экземпляра функции (эмулятор может запускать
+  // её в разных процессах), поэтому проверяем сам счётчик.
+  it('не больше 20 отчётов в минуту от одного пользователя', async () => {
+    const { allowReport } = await import('../../functions/lib/client_errors.js');
+    const t0 = 1_000_000;
+    const results = Array.from({ length: 25 }, (_, i) => allowReport('u-limit', t0 + i));
+    assert.equal(results.filter(Boolean).length, 20);
+    assert.equal(allowReport('другой', t0), true, 'у другого пользователя свой счётчик');
+    assert.equal(allowReport('u-limit', t0 + 60_000), true, 'через минуту — снова можно');
+  });
+});

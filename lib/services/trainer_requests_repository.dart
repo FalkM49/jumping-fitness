@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 
 import '../models/firestore_paths.dart';
 import '../models/trainer_request.dart';
@@ -45,14 +44,9 @@ class FirebaseTrainerRequestsRepository implements TrainerRequestsRepository {
   @override
   Future<void> reject(String uid) => _call('rejectTrainerRequest', uid);
 
-  Future<void> _call(String name, String uid) async {
-    try {
-      await callableFor(_functions, name).call<Object?>({'uid': uid});
-    } on FirebaseFunctionsException catch (error) {
-      debugPrint('Функция $name: ${error.code} — ${error.message}');
-      throw cloudFunctionFailureFrom(error);
-    }
-  }
+  Future<void> _call(String name, String uid) =>
+      callFunction(_functions, name, {'uid': uid});
+
 }
 
 /// Порядок показа: раньше поданные — выше; заявка без даты (только что

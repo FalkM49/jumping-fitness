@@ -1,5 +1,4 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
 import 'cloud_functions.dart';
@@ -67,14 +66,9 @@ class CloudStudioFunctions implements StudioFunctions {
 
   final FirebaseFunctions _functions;
 
-  Future<void> _call(String name, Map<String, Object?> args) async {
-    try {
-      await callableFor(_functions, name).call<Object?>(args);
-    } on FirebaseFunctionsException catch (error) {
-      debugPrint('Функция $name: ${error.code} — ${error.message}');
-      throw cloudFunctionFailureFrom(error);
-    }
-  }
+  Future<void> _call(String name, Map<String, Object?> args) =>
+      callFunction(_functions, name, args);
+
 
   /// Существующая тренировка — по ID, по расписанию без документа — по ячейке.
   static Map<String, Object?> _target(Training training) => training.id != null

@@ -22,6 +22,7 @@ export { bookTraining, cancelBooking } from './bookings.js';
 export { freezeSubscription } from './subscriptions.js';
 export { ensureMonthlyFlower } from './flowers.js';
 export { notifyTrainerRequest } from './trainer_requests.js';
+export { reportClientError } from './client_errors.js';
 
 // Тренер и администратор
 export { createTraining, updateTraining, cancelTraining } from './trainings.js';

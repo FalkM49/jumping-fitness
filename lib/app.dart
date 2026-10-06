@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'routing/app_keys.dart';
 import 'routing/app_router.dart';
+import 'services/error_reporter.dart';
+import 'services/web_session.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_mode_controller.dart';
 
@@ -40,6 +42,8 @@ class JumpingFitnessApp extends ConsumerWidget {
       initialRoute: AppRouter.initialRoute,
       onGenerateInitialRoutes: AppRouter.onGenerateInitialRoutes,
       onGenerateRoute: AppRouter.onGenerateRoute,
+      // Текущий экран — для журнала ошибок веб-версии (docs/09, шаг 1).
+      navigatorObservers: [AppRouteTracker(onChange: rememberRoute)],
     );
   }
 }

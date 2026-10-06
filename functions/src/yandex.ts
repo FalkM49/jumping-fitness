@@ -34,6 +34,7 @@ export const callables: Record<string, Callable> = {
   freezeSubscription: api.freezeSubscription,
   ensureMonthlyFlower: api.ensureMonthlyFlower,
   notifyTrainerRequest: api.notifyTrainerRequest,
+  reportClientError: api.reportClientError,
   createTraining: api.createTraining,
   updateTraining: api.updateTraining,
   cancelTraining: api.cancelTraining,
@@ -189,7 +190,11 @@ async function callFunction(event: YandexHttpEvent): Promise<YandexHttpResponse>
     try {
       const token = await getAuth().verifyIdToken(bearer);
       auth = { uid: token.uid, token, rawToken: bearer };
-    } catch {
+    } catch (error) {
+      logger.info('Токен входа не принят', {
+        fn: name,
+        code: (error as { code?: string }).code ?? String(error),
+      });
       return failure(new HttpsError('unauthenticated', 'Вход устарел. Войдите в приложение заново.'));
     }
   }

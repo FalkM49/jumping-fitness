@@ -9,6 +9,7 @@ import '../../client/client_providers.dart';
 import '../../models/models.dart';
 import '../../services/backend_providers.dart';
 import '../../services/cloud_functions.dart';
+import '../../services/error_reporter.dart';
 import '../../theme/theme_context.dart';
 import '../../utils/ru_format.dart';
 
@@ -164,7 +165,10 @@ class _BookingActionState extends ConsumerState<_BookingAction> {
   bool _busy = false;
   String? _error;
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    required String fallback,
+  }) async {
     setState(() {
       _busy = true;
       _error = null;
@@ -173,6 +177,11 @@ class _BookingActionState extends ConsumerState<_BookingAction> {
       await action();
     } on CloudFunctionFailure catch (failure) {
       if (mounted) setState(() => _error = failure.message);
+    } on Object catch (error, stack) {
+      // Раньше любое другое исключение просто гасило спиннер без слов —
+      // в вебе это выглядело как «нажимаю — ничего не происходит».
+      reportClientError('function_error', error, stack, {'action': fallback});
+      if (mounted) setState(() => _error = fallback);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -180,6 +189,7 @@ class _BookingActionState extends ConsumerState<_BookingAction> {
 
   Future<void> _book() => _run(
     () => ref.read(studioFunctionsProvider).bookTraining(widget.cell.training),
+    fallback: 'Не получилось записаться. Попробуйте ещё раз.',
   );
 
   Future<void> _cancel() async {
@@ -207,6 +217,7 @@ class _BookingActionState extends ConsumerState<_BookingAction> {
     if (confirmed != true || !mounted) return;
     await _run(
       () => ref.read(studioFunctionsProvider).cancelBooking(training.id!),
+      fallback: 'Не получилось отменить запись. Попробуйте ещё раз.',
     );
   }
 

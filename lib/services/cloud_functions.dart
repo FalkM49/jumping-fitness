@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
+import 'error_reporter.dart';
 import 'firebase_bootstrap.dart' show useFirebaseEmulators;
 
 /// Регион Cloud Functions — тот же, что в functions/src/config.ts.
@@ -19,12 +21,62 @@ const String functionsApiUrl = String.fromEnvironment(
       : 'https://d5dg4jlie0pflgjhlb0c.fovt0b64.apigw.yandexcloud.net',
 );
 
+/// Сколько ждать ответа функции. Без предела спиннер в браузере мог висеть
+/// бесконечно; повтор после таймаута безопасен (запись — документ с id
+/// клиента, двойной записи не будет).
+const Duration functionCallTimeout = Duration(seconds: 20);
+
 /// Вызов функции [name]: в Yandex Cloud — `<адрес шлюза>/<имя>`, протокол
 /// тот же, что у Firebase (токен входа плагин добавляет сам).
-HttpsCallable callableFor(FirebaseFunctions functions, String name) =>
-    functionsApiUrl.isEmpty
-    ? functions.httpsCallable(name)
-    : functions.httpsCallableFromUrl('$functionsApiUrl/$name');
+HttpsCallable callableFor(FirebaseFunctions functions, String name) {
+  final options = HttpsCallableOptions(timeout: functionCallTimeout);
+  return functionsApiUrl.isEmpty
+      ? functions.httpsCallable(name, options: options)
+      : functions.httpsCallableFromUrl(
+          '$functionsApiUrl/$name',
+          options: options,
+        );
+}
+
+/// Отказы по правилам — ожидаемые, в журнал ошибок их не шлём.
+const _expectedCodes = {
+  'failed-precondition',
+  'permission-denied',
+  'not-found',
+  'invalid-argument',
+  'unauthenticated',
+};
+
+/// Вызвать функцию с единой обработкой ошибок. Любой сбой — и ответ
+/// сервера, и сеть, и ошибка JS в браузере — превращается в
+/// [CloudFunctionFailure] с текстом для пользователя: кнопка не может
+/// «молча» погасить спиннер. Неожиданные сбои уходят в журнал (docs/09).
+Future<Object?> callFunction(
+  FirebaseFunctions functions,
+  String name,
+  Object? args,
+) async {
+  try {
+    final result = await callableFor(functions, name).call<Object?>(args);
+    return result.data;
+  } on FirebaseFunctionsException catch (error, stack) {
+    debugPrint('Функция $name: ${error.code} — ${error.message}');
+    if (!_expectedCodes.contains(error.code)) {
+      reportClientError('function_error', error, stack, {
+        'function': name,
+        'code': error.code,
+      });
+    }
+    throw cloudFunctionFailureFrom(error);
+  } on Object catch (error, stack) {
+    debugPrint('Функция $name: $error');
+    reportClientError('function_error', error, stack, {'function': name});
+    throw const CloudFunctionFailure(
+      'Не получилось выполнить действие. Проверьте интернет и попробуйте ещё раз.',
+      'client-error',
+    );
+  }
+}
 
 /// Ошибка вызова Cloud Function с текстом для пользователя.
 class CloudFunctionFailure implements Exception {
