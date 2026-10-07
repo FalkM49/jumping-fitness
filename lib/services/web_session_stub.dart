@@ -6,3 +6,5 @@ void rememberRoute(String route) {}
 String userAgent() => '';
 
 void onWebglLost(void Function() callback) {}
+
+void refreshViewport() {}

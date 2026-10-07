@@ -55,6 +55,35 @@
       });
     })();
 
+    // Пересчёт размера экрана Flutter после ввода текста.
+    //
+    // Пока на телефоне идёт ввод, движок Flutter считает любое изменение
+    // окна клавиатурой и размер экрана не обновляет (engine/window.dart,
+    // _shouldPreservePhysicalSizeOnResize). Если поле исчезло вместе с
+    // экраном (вход → главный экран тренера), клавиатура уезжает уже без
+    // ввода, и Flutter остаётся со старым размером: зоны нажатия съезжают
+    // относительно кнопок, пока не начнёшь новый ввод (поиск по ФИО).
+    // Когда клавиатура ушла и ввод закончен — повторяем событие resize,
+    // его движок слушает у visualViewport, и он пересчитает размер.
+    window.jfRefreshViewport = function () {
+      [400, 1000].forEach(function (delay) {
+        setTimeout(function () {
+          var active = document.activeElement;
+          if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+            return; // ввод продолжается — клавиатура на месте
+          }
+          window.scrollTo(0, 0);
+          (window.visualViewport || window).dispatchEvent(new Event('resize'));
+        }, delay);
+      });
+    };
+    document.addEventListener('focusout', function (event) {
+      var el = event.target;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+        window.jfRefreshViewport();
+      }
+    }, true);
+
     // Возврат после сворачивания (docs/09, шаг 6).
     (function () {
       // Safari может отобрать у страницы WebGL-контекст — сообщаем в журнал

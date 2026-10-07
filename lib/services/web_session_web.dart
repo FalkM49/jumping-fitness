@@ -51,3 +51,17 @@ void onWebglLost(void Function() callback) {
     ((web.Event _) => callback()).toJS,
   );
 }
+
+@JS('jfRefreshViewport')
+external JSFunction? get _refreshViewportFunction;
+
+/// Попросить Flutter пересчитать размер экрана, когда клавиатура уйдёт
+/// (функция в web/index.html). Нужна после смены экрана, на котором шёл
+/// ввод: иначе на iPhone зоны нажатия съезжают относительно кнопок.
+void refreshViewport() {
+  try {
+    _refreshViewportFunction?.callAsFunction();
+  } on Object {
+    // Старый index.html без функции — ничего страшного.
+  }
+}

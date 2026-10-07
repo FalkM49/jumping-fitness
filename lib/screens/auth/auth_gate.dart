@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/session.dart';
 import '../../notifications/push_coordinator.dart';
 import '../../services/backend_providers.dart';
+import '../../services/web_session.dart';
 import '../../widgets/app_title.dart';
 import '../client/client_home_screen.dart';
 import '../trainer/trainer_home_screen.dart';
@@ -28,6 +29,9 @@ class AuthGate extends ConsumerWidget {
     ref.listen(sessionProvider.select(sessionFingerprint), (previous, next) {
       if (previous != next) {
         Navigator.of(context).popUntil((route) => route.isFirst);
+        // Экран входа исчез вместе с полем ввода, пока клавиатура ещё
+        // была на экране, — в вебе пересчитываем размер (iPhone).
+        refreshViewport();
       }
     });
 
