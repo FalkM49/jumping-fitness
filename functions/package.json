@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "build:netlify": "tsc && node scripts/bundle-netlify.mjs",
     "emulators": "npm run build && node scripts/firebase-emulators.mjs emulators:start --config ../firebase.json --only auth,firestore,functions --project demo-jumping-fitness --import ../firebase/dev/emulator-data --export-on-exit ../firebase/dev/emulator-data",
     "dev:links": "node scripts/email-links.mjs",
     "dev:make-admin": "node scripts/make-admin.mjs",
@@ -19,7 +20,7 @@
     "deploy:yc": "node scripts/deploy-yandex.mjs",
     "deploy:rules": "npx firebase deploy --config ../firebase.json --only firestore:rules,firestore:indexes",
     "dev:api": "npm run build && node scripts/yandex-local.mjs",
-    "dev:api:netlify": "npm run build && node scripts/netlify-local.mjs",
+    "dev:api:netlify": "npm run build:netlify && node scripts/netlify-local.mjs",
     "dev:client": "node scripts/client.mjs"
   },
   "dependencies": {
@@ -27,6 +28,7 @@
     "firebase-functions": "^7.4.0"
   },
   "devDependencies": {
+    "esbuild": "^0.25.12",
     "firebase-tools": "^15.31.0",
     "typescript": "^5.9.3"
   }

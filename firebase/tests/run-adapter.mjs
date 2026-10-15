@@ -9,14 +9,23 @@ import { spawn } from 'node:child_process';
 
 const adapters = {
   yandex: { port: 5102, script: '../../functions/scripts/yandex-local.mjs', base: '' },
-  netlify: { port: 5103, script: '../../functions/scripts/netlify-local.mjs', base: '/api' },
+  // Без require() ES-модулей — как на Netlify, где сервер падал с
+  // ERR_REQUIRE_ESM (functions/scripts/bundle-netlify.mjs).
+  netlify: {
+    port: 5103,
+    script: '../../functions/scripts/netlify-local.mjs',
+    base: '/api',
+    nodeOptions: '--no-experimental-require-module',
+  },
 };
 const [name, ...tests] = process.argv.slice(2);
 const adapter = adapters[name];
 if (!adapter) throw new Error(`Неизвестный адаптер «${name}»: ${Object.keys(adapters).join(', ')}`);
 
+// Только для сервера: сами тесты местами грузят несобранный lib/ напрямую.
+const nodeOptions = [process.env.NODE_OPTIONS, adapter.nodeOptions].filter(Boolean).join(' ');
 const server = spawn(process.execPath, [adapter.script], {
-  env: { ...process.env, PORT: String(adapter.port) },
+  env: { ...process.env, PORT: String(adapter.port), NODE_OPTIONS: nodeOptions },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 

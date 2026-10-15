@@ -3,7 +3,8 @@
 
 [build]
   base = "functions"
-  command = "npm run build"
+  # Сервер — в один файл (scripts/bundle-netlify.mjs): иначе ERR_REQUIRE_ESM.
+  command = "npm run build:netlify"
   # Пути ниже — относительно base (functions/).
   functions = "netlify/functions"
   publish = "netlify/public"
