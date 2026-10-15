@@ -12,5 +12,11 @@
   # если изменился сервер (functions/) или этот файл. Код 0 — пропустить.
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ../netlify.toml"
 
+[functions]
+  # Firestore не входит в собранный файл (читает свои proto-файлы с диска) —
+  # Netlify должен положить пакет в функцию целиком, иначе
+  # «Cannot find module '@google-cloud/firestore'».
+  external_node_modules = ["@google-cloud/firestore"]
+
 [build.environment]
   NODE_VERSION = "22"
