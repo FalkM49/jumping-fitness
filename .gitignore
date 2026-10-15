@@ -70,3 +70,5 @@ functions/netlify/bundle/
 firebase/dev/emulator-data/
 **/firebase-export-*/
 
+# Готовый APK для загрузки в GitHub Releases (tool\publish_apk.ps1)
+/dist/

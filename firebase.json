@@ -9,7 +9,7 @@
     "redirects": [
       {
         "source": "/android",
-        "destination": "https://storage.yandexcloud.net/jumpingfitness-download/jumping-fitness.apk",
+        "destination": "https://github.com/FalkM49/jumping-fitness/releases/latest/download/JumpingFitness.apk",
         "type": 302
       }
     ],

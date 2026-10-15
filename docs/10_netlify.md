@@ -150,9 +150,8 @@ Claude меняет адрес сервера по умолчанию в `lib/se
 2. **API Gateway:** удалить `jumping-fitness-gateway`.
 3. **Cloud Functions:** удалить `jumping-fitness-api`.
 4. **Lockbox:** удалить `firebase-service-account`. Это и была главная статья расходов.
-5. **Object Storage:** бакет `jumpingfitness-download` хранит APK для ссылки
-   `/android`. Его либо оставить (копейки), либо перенести APK, например в
-   GitHub Releases, и поменять перенаправление в `firebase.json`.
+5. **Object Storage:** бакет `jumpingfitness-download` можно удалить. APK для
+   ссылки `/android` теперь лежит в GitHub Releases (`tool\publish_apk.ps1`).
 
 Старый ключ сервисного аккаунта Firebase, который лежал в Lockbox, можно
 отозвать в консоли Firebase (**Project settings → Service accounts**), если
