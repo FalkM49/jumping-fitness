@@ -77,10 +77,12 @@ Get-Content E:\keys\jf-admin.json -Raw | ConvertFrom-Json | ConvertTo-Json -Comp
 
 - **Project configuration → General → Change project name**, например
   `jumpingfitness-api`. Адрес API станет `https://jumpingfitness-api.netlify.app/api`.
-- Регион в интерфейсе выбирать не нужно: с июня 2026 Netlify задаёт его в
-  коде функции (`region: 'fra'` в `config`), он уже стоит — Франкфурт, рядом
-  с Firestore. Если Netlify откажется собирать из-за региона (ограничение
-  тарифа), уберите `region` из трёх файлов в `functions/netlify/functions/`.
+- Регион не настраиваем. С июня 2026 года Netlify задаёт его в коде функции
+  (`region` в `config`), но бесплатный тариф это запрещает: сборка падает с
+  ошибкой «Your plan does not support configuring function regions».
+  Поэтому функции работают в регионе по умолчанию (США, Огайо). Ответ
+  приходит на десятые доли секунды медленнее, чем из Франкфурта, рядом с
+  которым Firestore.
 - **Deploys → Trigger deploy → Deploy project.**
 
 ### 4. Проверка сервера

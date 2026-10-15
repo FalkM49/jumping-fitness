@@ -27,12 +27,13 @@ beforeEach(async () => {
 });
 
 describe('функции Netlify', () => {
-  it('расписание — как у таймеров Yandex (UTC), регион — Франкфурт', () => {
-    assert.deepEqual(api.config, { path: '/api/:fn', region: 'fra' });
+  it('расписание — как у таймеров Yandex (UTC)', () => {
+    assert.deepEqual(api.config, { path: '/api/:fn' });
     assert.equal(expire.config.schedule, '5 21 * * *');
     assert.equal(flowers.config.schedule, '10 21 * * *');
-    assert.equal(expire.config.region, 'fra');
-    assert.equal(flowers.config.region, 'fra');
+    // Регион не задаём: на бесплатном тарифе Netlify выбор региона запрещён.
+    assert.equal(expire.config.region, undefined);
+    assert.equal(flowers.config.region, undefined);
   });
 
   it('expire-daily сжигает истёкшие абонементы', async () => {

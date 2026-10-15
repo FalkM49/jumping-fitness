@@ -4,5 +4,4 @@ import { apiHandler } from '../../lib/netlify.js';
 
 export default apiHandler;
 
-// Регион — Франкфурт (fra): там же Firestore (europe-west3), запросы к базе быстрее.
-export const config = { path: '/api/:fn', region: 'fra' };
+export const config = { path: '/api/:fn' };
