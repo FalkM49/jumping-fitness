@@ -4,4 +4,4 @@ import { scheduledJob } from '../../lib/netlify.js';
 
 export default scheduledJob('assignMonthlyFlowers');
 
-export const config = { schedule: '10 21 * * *' };
+export const config = { schedule: '10 21 * * *', region: 'fra' };

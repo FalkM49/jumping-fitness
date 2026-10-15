@@ -27,10 +27,12 @@ beforeEach(async () => {
 });
 
 describe('функции Netlify', () => {
-  it('расписание — как у таймеров Yandex (UTC)', () => {
-    assert.deepEqual(api.config, { path: '/api/:fn' });
+  it('расписание — как у таймеров Yandex (UTC), регион — Франкфурт', () => {
+    assert.deepEqual(api.config, { path: '/api/:fn', region: 'fra' });
     assert.equal(expire.config.schedule, '5 21 * * *');
     assert.equal(flowers.config.schedule, '10 21 * * *');
+    assert.equal(expire.config.region, 'fra');
+    assert.equal(flowers.config.region, 'fra');
   });
 
   it('expire-daily сжигает истёкшие абонементы', async () => {

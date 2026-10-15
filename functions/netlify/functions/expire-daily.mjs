@@ -4,4 +4,4 @@ import { scheduledJob } from '../../lib/netlify.js';
 
 export default scheduledJob('expireSubscriptionsDaily');
 
-export const config = { schedule: '5 21 * * *' };
+export const config = { schedule: '5 21 * * *', region: 'fra' };
