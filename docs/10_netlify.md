@@ -24,6 +24,16 @@ functions/scripts/bundle-netlify.mjs  сборка сервера в один ф
 падала с ошибкой 502 `ERR_REQUIRE_ESM`. `npm run test:netlify` запускает
 сервер в тех же условиях, поэтому такую ошибку поймает.
 
+В файл входит всё, включая Firestore. Упаковщик Netlify кладёт в архив
+только сам файл функции, без пакетов из `node_modules`, поэтому без этого
+была ошибка «Cannot find module '@google-cloud/firestore'».
+
+Как проверить то, что реально уедет на Netlify:
+1. Упаковать функции библиотекой Netlify `@netlify/zip-it-and-ship-it`.
+2. Распаковать `api.zip`.
+3. Запустить тесты на распакованном файле:
+   `$env:NETLIFY_API_ENTRY='<папка>\api.mjs'; npm run test:netlify`.
+
 Защиту сайта (**Project configuration → Access & security → Visitor access**)
 нужно выключить. Иначе на любой запрос Netlify отвечает 401 и
 перенаправляет на свою страницу входа, и до функций запрос не доходит.

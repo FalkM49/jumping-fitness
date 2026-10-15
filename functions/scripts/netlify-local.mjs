@@ -8,6 +8,7 @@
 // Адрес, как в облаке: POST http://127.0.0.1:5003/api/bookTraining
 
 import { createServer } from 'node:http';
+import { pathToFileURL } from 'node:url';
 
 process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:8080';
 process.env.FIREBASE_AUTH_EMULATOR_HOST ??= '127.0.0.1:9099';
@@ -15,10 +16,15 @@ process.env.GCLOUD_PROJECT ??= 'demo-jumping-fitness';
 // Как в эмуляторе Functions: push через FCM не отправляются.
 process.env.FUNCTIONS_EMULATOR ??= 'true';
 
-const { default: api, config } = await import('../netlify/functions/api.mjs');
+// NETLIFY_API_ENTRY — путь к другой точке входа, например к api.mjs из
+// архива, который собрал упаковщик Netlify (@netlify/zip-it-and-ship-it).
+const entry = process.env.NETLIFY_API_ENTRY
+  ? pathToFileURL(process.env.NETLIFY_API_ENTRY).href
+  : '../netlify/functions/api.mjs';
+const { default: api, config } = await import(entry);
 const port = Number(process.env.PORT ?? 5003);
 // '/api/:fn' → /^\/api\/([^/]+)$/
-const route = new RegExp(`^${config.path.replace(/:(\w+)/, '([^/]+)')}$`);
+const route = new RegExp(`^${(config?.path ?? '/api/:fn').replace(/:(\w+)/, '([^/]+)')}$`);
 
 createServer(async (req, res) => {
   const chunks = [];
