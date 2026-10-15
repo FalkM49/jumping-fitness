@@ -176,8 +176,9 @@
 
 ```bash
 cd firebase/tests
-npm run test:functions   # 62 сценария: запись, отмена, тренер, заморозка, продление, сгорание, заявки, уведомления
-npm run test:yandex      # те же 62 + 8 проверок переходника — через адаптер Yandex
+npm run test:functions   # 64 сценария: запись, отмена, тренер, заморозка, продление, сгорание, заявки, уведомления
+npm run test:yandex      # те же 64 + 9 проверок — через адаптер Yandex
+npm run test:netlify     # те же 64 + 10 проверок — через адаптер Netlify (docs/10_netlify.md)
 npm test                 # правила Firestore
 ```
 

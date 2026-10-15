@@ -11,8 +11,9 @@ const String cloudFunctionsRegion = 'europe-west3';
 FirebaseFunctions regionalFunctions() =>
     FirebaseFunctions.instanceFor(region: cloudFunctionsRegion);
 
-/// Адрес шлюза серверных функций в Yandex Cloud (functions/src/yandex.ts,
-/// выводит `npm run deploy:yc`). Пусто — функции Firebase (эмулятор).
+/// Адрес серверных функций: шлюз Yandex Cloud (functions/src/yandex.ts,
+/// выводит `npm run deploy:yc`) или Netlify — `https://<сайт>.netlify.app/api`
+/// (docs/10_netlify.md). Пусто — функции Firebase (эмулятор).
 /// Другой адрес при сборке: `--dart-define=FUNCTIONS_API_URL=https://…`.
 const String functionsApiUrl = String.fromEnvironment(
   'FUNCTIONS_API_URL',

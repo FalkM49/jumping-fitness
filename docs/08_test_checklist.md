@@ -11,6 +11,7 @@
    | Приложение (Flutter) | `flutter test` | 149 / 149 |
    | Функции (эмулятор Firebase) | `cd firebase/tests` → `npm run test:functions` | 62 / 62 |
    | Функции через переходник Yandex | `cd firebase/tests` → `npm run test:yandex` | 70 / 70 |
+   | Функции через переходник Netlify (15.10.2026) | `cd firebase/tests` → `npm run test:netlify` | 74 / 74 |
    | Security Rules | `cd firebase/tests` → `npm test` | 46 / 46 |
    | Анализатор | `flutter analyze` | без замечаний |
    | Релизная сборка | `flutter build apk --release` | собирается |

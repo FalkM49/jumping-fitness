@@ -1,0 +1,15 @@
+# Netlify: только серверные функции (папка functions/). Само приложение
+# по-прежнему на Firebase Hosting. Инструкция — docs/10_netlify.md.
+
+[build]
+  base = "functions"
+  command = "npm run build"
+  # Пути ниже — относительно base (functions/).
+  functions = "netlify/functions"
+  publish = "netlify/public"
+  # Каждая выкладка тратит кредиты бесплатного тарифа — собираем, только
+  # если изменился сервер (functions/) или этот файл. Код 0 — пропустить.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ../netlify.toml"
+
+[build.environment]
+  NODE_VERSION = "22"

@@ -7,8 +7,8 @@ import { Timestamp, doc, getDoc, getDocs, collection, setDoc } from 'firebase/fi
 export const PROJECT_ID = 'demo-jumping-fitness';
 export const REGION = 'europe-west3';
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9199';
-// Куда слать вызовы: эмулятор Functions или локальный адаптер Yandex
-// (npm run test:yandex задаёт CALLABLE_BASE).
+// Куда слать вызовы: эмулятор Functions или локальный адаптер площадки
+// (npm run test:yandex / test:netlify задают CALLABLE_BASE).
 const CALLABLE_BASE =
   process.env.CALLABLE_BASE ?? `http://127.0.0.1:5101/${PROJECT_ID}/${REGION}`;
 

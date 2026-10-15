@@ -9,8 +9,9 @@
   "scripts": {
     "test": "node ../../functions/scripts/firebase-emulators.mjs emulators:exec --config ../../firebase.test.json --only firestore --project demo-jumping-fitness \"node --test firestore.rules.test.mjs\"",
     "test:functions": "npm --prefix ../../functions run build && node ../../functions/scripts/firebase-emulators.mjs emulators:exec --config ../../firebase.test.json --only auth,firestore,functions --project demo-jumping-fitness \"node --test --test-concurrency=1 functions.test.mjs business.test.mjs flowers.test.mjs notifications.test.mjs\"",
-    "test:yandex": "npm --prefix ../../functions run build && node ../../functions/scripts/firebase-emulators.mjs emulators:exec --config ../../firebase.test.json --only auth,firestore --project demo-jumping-fitness \"node run-yandex.mjs yandex.test.mjs functions.test.mjs business.test.mjs flowers.test.mjs notifications.test.mjs\"",
-    "test:all": "npm test && npm run test:functions && npm run test:yandex"
+    "test:yandex": "npm --prefix ../../functions run build && node ../../functions/scripts/firebase-emulators.mjs emulators:exec --config ../../firebase.test.json --only auth,firestore --project demo-jumping-fitness \"node run-adapter.mjs yandex http-api.test.mjs yandex.test.mjs functions.test.mjs business.test.mjs flowers.test.mjs notifications.test.mjs\"",
+    "test:netlify": "npm --prefix ../../functions run build && node ../../functions/scripts/firebase-emulators.mjs emulators:exec --config ../../firebase.test.json --only auth,firestore --project demo-jumping-fitness \"node run-adapter.mjs netlify http-api.test.mjs netlify.test.mjs functions.test.mjs business.test.mjs flowers.test.mjs notifications.test.mjs\"",
+    "test:all": "npm test && npm run test:functions && npm run test:yandex && npm run test:netlify"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
