@@ -2,7 +2,7 @@ name: jumping_fitness
 description: "Jumping Fitness — запись на групповые тренировки и учёт абонементов."
 publish_to: "none"
 
-version: 0.1.0+1
+version: 0.1.1+2
 
 environment:
   # Минимум задан самой новой зависимостью (flutter_riverpod 3.4 → Dart 3.12,

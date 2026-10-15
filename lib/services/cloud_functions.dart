@@ -11,15 +11,16 @@ const String cloudFunctionsRegion = 'europe-west3';
 FirebaseFunctions regionalFunctions() =>
     FirebaseFunctions.instanceFor(region: cloudFunctionsRegion);
 
-/// Адрес серверных функций: шлюз Yandex Cloud (functions/src/yandex.ts,
-/// выводит `npm run deploy:yc`) или Netlify — `https://<сайт>.netlify.app/api`
-/// (docs/10_netlify.md). Пусто — функции Firebase (эмулятор).
-/// Другой адрес при сборке: `--dart-define=FUNCTIONS_API_URL=https://…`.
+/// Адрес серверных функций: Netlify (functions/src/netlify.ts,
+/// docs/10_netlify.md). Пусто — функции Firebase (эмулятор).
+/// Другой адрес при сборке: `--dart-define=FUNCTIONS_API_URL=https://…`,
+/// например прежний шлюз Yandex Cloud (functions/src/yandex.ts):
+/// https://d5dg4jlie0pflgjhlb0c.fovt0b64.apigw.yandexcloud.net
 const String functionsApiUrl = String.fromEnvironment(
   'FUNCTIONS_API_URL',
   defaultValue: useFirebaseEmulators
       ? ''
-      : 'https://d5dg4jlie0pflgjhlb0c.fovt0b64.apigw.yandexcloud.net',
+      : 'https://jumpingfitness-api.netlify.app/api',
 );
 
 /// Сколько ждать ответа функции. Без предела спиннер в браузере мог висеть
